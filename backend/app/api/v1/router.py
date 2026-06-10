@@ -1,0 +1,10 @@
+from fastapi import APIRouter
+
+from app.api.v1.endpoints import auth, challenges, reviews, routine, trail
+
+api_router = APIRouter(prefix="/api/v1")
+api_router.include_router(auth.router)
+api_router.include_router(challenges.router)
+api_router.include_router(reviews.router)
+api_router.include_router(routine.router)
+api_router.include_router(trail.router)

@@ -1,0 +1,146 @@
+from datetime import date, datetime
+
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
+
+
+# --- Auth ---
+
+class UserCreate(BaseModel):
+    email: EmailStr
+    password: str = Field(min_length=8)
+
+
+class UserOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    email: EmailStr
+    created_at: datetime
+    current_phase: int
+
+
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+
+class TokenPair(BaseModel):
+    access_token: str
+    refresh_token: str
+    token_type: str = "bearer"
+
+
+class RefreshRequest(BaseModel):
+    refresh_token: str
+
+
+# --- Challenges ---
+
+class ChallengeOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    date: date
+    title: str
+    math_problem: str
+    programming_task: str
+    difficulty: str
+    category: str
+    expected_output_example: str
+    constraints: str
+
+
+class SubmissionCreate(BaseModel):
+    math_derivation: str
+    code_submission: str = Field(min_length=1)
+
+
+class SubmissionOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    challenge_id: int
+    result: str
+    reason: str
+    submitted_at: datetime
+
+
+class ChallengeHistoryItem(BaseModel):
+    challenge: ChallengeOut
+    submissions: list[SubmissionOut]
+
+
+# --- Routine ---
+
+class RoutineItemOut(BaseModel):
+    item_key: str
+    label: str
+    status: str | None  # DONE / LATE / SKIPPED / None (not logged)
+    logged_at: datetime | None
+
+
+class RoutineCheckRequest(BaseModel):
+    status: str = Field(pattern="^(DONE|SKIPPED)$")
+
+
+class RoutineDayOut(BaseModel):
+    date: date
+    items: list[RoutineItemOut]
+
+
+class RoutineWeekOut(BaseModel):
+    days: list[RoutineDayOut]
+
+
+# --- Reviews (spaced repetition) ---
+
+class ReviewCardOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    topic: str
+    phase_id: int
+    repetitions: int
+    interval_days: int
+    due_date: date
+
+
+class ReviewGradeRequest(BaseModel):
+    grade: int = Field(ge=0, le=3, description="0=forgot, 1=hard, 2=good, 3=easy")
+
+
+class ReviewStatsOut(BaseModel):
+    total: int
+    due: int
+    reviewed_today: int
+    mature: int
+
+
+# --- Trail ---
+
+class PhaseOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    number: int
+    name: str
+    weeks: str
+    topics: list[str]
+    exercises: list[str]
+
+
+class PhaseProgressOut(BaseModel):
+    phase: PhaseOut
+    started_at: datetime | None
+    completed_at: datetime | None
+    summary: str
+    is_current: bool
+
+
+class TrailProgressOut(BaseModel):
+    current_phase: int
+    phases: list[PhaseProgressOut]
+
+
+class PhaseCompleteRequest(BaseModel):
+    summary: str = Field(min_length=100, description="Written summary of what was learned")
