@@ -1,0 +1,197 @@
+import type { ptBR } from "./pt-BR";
+
+export const en: Record<keyof typeof ptBR, string> = {
+  // Nav
+  "nav.dashboard": "Dashboard",
+  "nav.routine": "Routine",
+  "nav.challenge": "Challenge",
+  "nav.review": "Review",
+  "nav.trail": "Trail",
+  "nav.settings": "Settings",
+  "nav.logout": "logout",
+
+  // Common
+  "common.loading": "loading...",
+  "common.back": "← back",
+
+  // Auth
+  "auth.tagline_login": "No shortcuts. Sign in and train.",
+  "auth.tagline_register": "Daily commitment. Start now.",
+  "auth.email": "email",
+  "auth.password": "password",
+  "auth.password_hint": "password (min. 8 characters)",
+  "auth.login": "Sign in",
+  "auth.login_busy": "signing in...",
+  "auth.register": "Create account",
+  "auth.register_busy": "creating...",
+  "auth.no_account": "No account?",
+  "auth.create_account": "Create account",
+  "auth.has_account": "Already registered?",
+  "auth.login_failed": "Login failed",
+  "auth.register_failed": "Registration failed",
+
+  // Dashboard
+  "dashboard.greeting_morning": "Good morning.",
+  "dashboard.greeting_afternoon": "Good afternoon.",
+  "dashboard.greeting_evening": "Good evening.",
+  "dashboard.routine": "Routine",
+  "dashboard.items_logged": "items logged today",
+  "dashboard.challenge": "Challenge",
+  "dashboard.not_attempted": "not attempted",
+  "dashboard.not_generated": "not generated",
+  "dashboard.open_today": "open today's challenge",
+  "dashboard.review": "Review",
+  "dashboard.cards": "cards",
+  "dashboard.all_caught_up": "all caught up",
+  "dashboard.pending_cards": "due today",
+  "dashboard.trail": "Trail",
+  "dashboard.current_phase": "current phase",
+  "dashboard.pending_today": "Pending today",
+  "dashboard.go_routine": "Go to routine →",
+
+  // Routine
+  "routine.title": "Routine",
+  "routine.subtitle": "Permanent log. No editing the past.",
+  "routine.today": "Today",
+  "routine.pomodoro": "Pomodoro — study session",
+  "routine.last7": "Last 7 days",
+  "routine.done": "done",
+  "routine.skip": "skip",
+  "routine.log_failed": "Failed to log item",
+  "routine.legend_done": "done",
+  "routine.legend_late": "late",
+  "routine.legend_skipped": "skipped",
+  "routine.legend_empty": "not logged",
+  "routine.not_logged": "not logged",
+
+  // Routine item labels (mirror backend item keys)
+  "routine.item.wake_up_before_7": "Wake up before 7:00 AM",
+  "routine.item.no_unnecessary_spending": "No unnecessary spending today",
+  "routine.item.study_session": "Study session completed (minimum 1 hour)",
+  "routine.item.daily_challenge": "Daily challenge attempted",
+  "routine.item.trail_review": "Review one concept from the learning trail",
+
+  // Pomodoro
+  "pomodoro.focus": "focus",
+  "pomodoro.break": "break",
+  "pomodoro.start": "start",
+  "pomodoro.pause": "pause",
+  "pomodoro.reset": "reset",
+  "pomodoro.one": "pomodoro",
+  "pomodoro.many": "pomodoros",
+  "pomodoro.focus_minutes": "min focused",
+  "pomodoro.hint_done":
+    "Over 1h of focus today — you can mark the study session as done.",
+  "pomodoro.hint_progress":
+    "Focus cycles with short breaks. Complete enough to close 1h of study.",
+
+  // Review
+  "review.title": "Review",
+  "review.subtitle":
+    "Active recall + spaced repetition. Explain from memory, then grade yourself.",
+  "review.due_today": "due today",
+  "review.reviewed_today": "reviewed today",
+  "review.mature": "mature",
+  "review.total": "total",
+  "review.card_left": "card left",
+  "review.cards_left": "cards left",
+  "review.explain": "Explain from memory",
+  "review.instruction":
+    "Say it out loud or write it on paper: what it is, how it works, where it's used. Only then grade yourself.",
+  "review.reveal": "I explained it — grade",
+  "review.grade0": "Forgot",
+  "review.grade0_hint": "back tomorrow",
+  "review.grade1": "Hard",
+  "review.grade1_hint": "short interval",
+  "review.grade2": "Good",
+  "review.grade2_hint": "normal interval",
+  "review.grade3": "Easy",
+  "review.grade3_hint": "long interval",
+  "review.interval": "current interval",
+  "review.repetitions": "repetitions",
+  "review.done_title": "All reviewed for today.",
+  "review.done_text":
+    "Cards come back at expanding intervals — that's how long-term memory is built.",
+
+  // Trail
+  "trail.title": "Trail",
+  "trail.subtitle": "Backend + DevOps. Linear, no skipping phases.",
+  "trail.phases": "phases",
+  "trail.topics": "Topics",
+  "trail.exercises": "Exercises",
+  "trail.completed": "completed",
+  "trail.current": "current phase",
+  "trail.locked": "locked",
+  "trail.your_summary": "Your summary",
+  "trail.feynman_label": "Feynman explanation (min. 100 characters)",
+  "trail.feynman_help":
+    "Explain what you learned as if teaching a beginner: simple words, no jargon. Where you get stuck is where you need to study again.",
+  "trail.feynman_placeholder":
+    "If you can't explain it simply, you don't understand it yet. (Feynman)",
+  "trail.complete": "Complete phase",
+  "trail.complete_failed": "Failed to complete phase",
+
+  // Challenge
+  "challenge.title": "Challenge",
+  "challenge.subtitle": "One per day. The same all day. No hints.",
+  "challenge.generating": "generating today's challenge...",
+  "challenge.load_failed": "Failed to load challenge",
+  "challenge.your_solution": "Your solution",
+  "challenge.history": "History",
+  "challenge.none": "No past challenges.",
+  "challenge.not_attempted": "not attempted",
+  "challenge.math_section": "Problem — math / physics",
+  "challenge.task_section": "Programming task",
+  "challenge.output_section": "Expected output example",
+  "challenge.constraints_section": "Constraints",
+  "challenge.difficulty_beginner": "beginner",
+  "challenge.difficulty_intermediate": "intermediate",
+  "challenge.difficulty_advanced": "advanced",
+  "challenge.derivation_label": "Math derivation",
+  "challenge.derivation_min": "min.",
+  "challenge.derivation_placeholder":
+    "Write the full derivation. Pen and paper first, then transcribe.",
+  "challenge.code_label": "Code",
+  "challenge.code_placeholder": "Type your code. No autocomplete. No AI.",
+  "challenge.submit": "Submit solution",
+  "challenge.submitting": "evaluating...",
+  "challenge.submit_failed": "Submission failed",
+  "challenge.result_pass": "PASS",
+  "challenge.result_fail": "FAIL",
+  "challenge.result_partial": "PARTIAL",
+  "challenge.result_pending": "PENDING",
+  "challenge.past_attempts": "Past attempts",
+  "challenge.no_attempts": "No attempts yet.",
+  "challenge.new_attempt": "New attempt",
+  "challenge.not_found": "Challenge not found.",
+
+  // Sandbox
+  "sandbox.title": "Sandbox — test your code",
+  "sandbox.run": "Run",
+  "sandbox.running": "running...",
+  "sandbox.loading_runtime": "loading Python (first time, ~10 MB)...",
+  "sandbox.language": "language",
+  "sandbox.output": "Output",
+  "sandbox.empty_output": "(no output)",
+  "sandbox.note":
+    "Runs 100% in your browser. No AI, no server — just you and the interpreter.",
+  "sandbox.loop_warning":
+    "An infinite loop freezes the tab. Ctrl+W is the price of indiscipline.",
+
+  // Settings
+  "settings.title": "Settings",
+  "settings.subtitle": "Language, Pomodoro and account.",
+  "settings.language": "Language",
+  "settings.language_help": "Applies to the whole interface, immediately.",
+  "settings.pomodoro": "Pomodoro",
+  "settings.pomodoro_help":
+    "Classic default: 25 min focus, 5 min break. Adjust if needed.",
+  "settings.focus_minutes": "focus minutes",
+  "settings.break_minutes": "break minutes",
+  "settings.account": "Account",
+  "settings.account_email": "email",
+  "settings.account_since": "member since",
+  "settings.account_phase": "current trail phase",
+  "settings.logout": "Log out",
+  "settings.saved": "saved",
+};
