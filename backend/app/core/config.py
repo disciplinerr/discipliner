@@ -6,7 +6,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    DATABASE_URL: str = "postgresql://disciplina:disciplina@localhost:5432/disciplina"
+    DATABASE_URL: str = "postgresql://discipliner:discipliner@localhost:5432/discipliner"
     ANTHROPIC_API_KEY: str = ""
     SECRET_KEY: str = "change-me"
     ALGORITHM: str = "HS256"

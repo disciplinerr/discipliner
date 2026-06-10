@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.router import api_router
 
-app = FastAPI(title="Disciplina API", version="1.0.0")
+app = FastAPI(title="Discipliner API", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,

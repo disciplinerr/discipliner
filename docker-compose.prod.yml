@@ -2,13 +2,13 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_DB: disciplina
-      POSTGRES_USER: disciplina
+      POSTGRES_DB: discipliner
+      POSTGRES_USER: discipliner
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U disciplina -d disciplina"]
+      test: ["CMD-SHELL", "pg_isready -U discipliner -d discipliner"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -17,7 +17,7 @@ services:
   backend:
     build: ./backend
     environment:
-      DATABASE_URL: postgresql://disciplina:${DB_PASSWORD}@postgres:5432/disciplina
+      DATABASE_URL: postgresql://discipliner:${DB_PASSWORD}@postgres:5432/discipliner
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
       SECRET_KEY: ${SECRET_KEY}
       ALGORITHM: ${ALGORITHM:-HS256}

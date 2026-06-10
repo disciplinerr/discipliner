@@ -1,5 +1,5 @@
-const ACCESS_KEY = "disciplina_access_token";
-const REFRESH_KEY = "disciplina_refresh_token";
+const ACCESS_KEY = "discipliner_access_token";
+const REFRESH_KEY = "discipliner_refresh_token";
 
 export function getAccessToken(): string | null {
   if (typeof window === "undefined") return null;

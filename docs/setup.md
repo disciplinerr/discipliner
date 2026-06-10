@@ -40,7 +40,7 @@ cd backend
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 
-export DATABASE_URL=postgresql://disciplina:<DB_PASSWORD>@localhost:5432/disciplina
+export DATABASE_URL=postgresql://discipliner:<DB_PASSWORD>@localhost:5432/discipliner
 export ANTHROPIC_API_KEY=<your key>
 export SECRET_KEY=<your secret>
 
