@@ -1,11 +1,12 @@
+import uuid
 from datetime import date, datetime, timezone
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.models import RoutineLog, RoutineStatus
+from app.models import RoutineLog, RoutineStatus, UserRoutineItem
 
-ROUTINE_ITEMS: dict[str, str] = {
+SYSTEM_ROUTINE_ITEMS: dict[str, str] = {
     "wake_up_before_7": "Wake up before 7:00 AM",
     "no_unnecessary_spending": "No unnecessary spending today",
     "study_session": "Study session completed (minimum 1 hour)",
@@ -14,14 +15,101 @@ ROUTINE_ITEMS: dict[str, str] = {
 }
 
 
+def ensure_items_seeded(db: Session, user_id: int) -> None:
+    """Seed system routine items for a user on first access. No-op if already seeded."""
+    count = db.scalar(
+        select(func.count()).select_from(UserRoutineItem).where(UserRoutineItem.user_id == user_id)
+    )
+    if count == 0:
+        for pos, (key, label) in enumerate(SYSTEM_ROUTINE_ITEMS.items()):
+            db.add(UserRoutineItem(
+                user_id=user_id,
+                item_key=key,
+                label=label,
+                is_system=True,
+                is_active=True,
+                position=pos,
+                created_at=datetime.now(timezone.utc),
+            ))
+        db.commit()
+
+
+def get_active_items(db: Session, user_id: int) -> list[UserRoutineItem]:
+    ensure_items_seeded(db, user_id)
+    return list(db.scalars(
+        select(UserRoutineItem)
+        .where(UserRoutineItem.user_id == user_id, UserRoutineItem.is_active.is_(True))
+        .order_by(UserRoutineItem.position)
+    ).all())
+
+
+def get_all_items(db: Session, user_id: int) -> list[UserRoutineItem]:
+    ensure_items_seeded(db, user_id)
+    return list(db.scalars(
+        select(UserRoutineItem)
+        .where(UserRoutineItem.user_id == user_id)
+        .order_by(UserRoutineItem.position)
+    ).all())
+
+
+def create_custom_item(db: Session, user_id: int, label: str) -> UserRoutineItem:
+    ensure_items_seeded(db, user_id)
+    max_pos = db.scalar(
+        select(func.max(UserRoutineItem.position)).where(UserRoutineItem.user_id == user_id)
+    ) or 0
+    key = f"custom_{uuid.uuid4().hex[:12]}"
+    item = UserRoutineItem(
+        user_id=user_id,
+        item_key=key,
+        label=label,
+        is_system=False,
+        is_active=True,
+        position=max_pos + 1,
+        created_at=datetime.now(timezone.utc),
+    )
+    db.add(item)
+    db.commit()
+    db.refresh(item)
+    return item
+
+
+def toggle_item(db: Session, user_id: int, item_key: str, is_active: bool) -> UserRoutineItem | None:
+    item = db.scalar(
+        select(UserRoutineItem).where(
+            UserRoutineItem.user_id == user_id,
+            UserRoutineItem.item_key == item_key,
+        )
+    )
+    if item is None:
+        return None
+    item.is_active = is_active
+    db.commit()
+    db.refresh(item)
+    return item
+
+
+def delete_custom_item(db: Session, user_id: int, item_key: str) -> bool:
+    item = db.scalar(
+        select(UserRoutineItem).where(
+            UserRoutineItem.user_id == user_id,
+            UserRoutineItem.item_key == item_key,
+            UserRoutineItem.is_system.is_(False),
+        )
+    )
+    if item is None:
+        return False
+    db.delete(item)
+    db.commit()
+    return True
+
+
 def log_item_if_absent(
     db: Session,
     user_id: int,
     item_key: str,
     status: RoutineStatus = RoutineStatus.DONE,
 ) -> None:
-    """Auto-log a routine item from another action (e.g. grading a review card
-    logs `trail_review`). No-op if already logged. Does not commit."""
+    """Auto-log a routine item from another action. No-op if already logged. Does not commit."""
     existing = db.scalar(
         select(RoutineLog).where(
             RoutineLog.user_id == user_id,
