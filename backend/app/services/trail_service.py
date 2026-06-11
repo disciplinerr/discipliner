@@ -1,10 +1,13 @@
+import logging
 from datetime import datetime, timezone
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models import TrailPhase, TrailProgress, User
+from app.models import Difficulty, TrailPhase, TrailProgress, User
 from app.schemas import PhaseOut, PhaseProgressOut, TrailProgressOut
+
+logger = logging.getLogger(__name__)
 
 
 def _phase_out(phase: TrailPhase) -> PhaseOut:
@@ -74,3 +77,14 @@ def complete_phase(db: Session, user: User, phase_id: int, summary: str) -> None
     record.summary = summary
     user.current_phase = user.current_phase + 1
     db.commit()
+
+    # Generate contextual English vocabulary for the completed phase (fire-and-forget)
+    try:
+        from app.services.english_service import generate_for_phase
+
+        phase_topics = ", ".join(t.strip() for t in phase.topics.split("\n") if t.strip())
+        diff_map = {1: "beginner", 2: "beginner", 3: "intermediate", 4: "intermediate", 5: "advanced", 6: "advanced"}
+        difficulty = diff_map.get(phase.number, "intermediate")
+        generate_for_phase(db, user, phase_topics, difficulty)
+    except Exception:
+        logger.exception("English generation hook failed for phase %s", phase.number)

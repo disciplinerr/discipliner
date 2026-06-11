@@ -1,6 +1,9 @@
 import {
   Challenge,
   ChallengeHistoryItem,
+  EnglishAnswerResult,
+  EnglishSession,
+  EnglishStats,
   ExecuteResult,
   PreviewChallenge,
   ReviewCard,
@@ -208,4 +211,28 @@ export function completePhase(phaseId: number, summary: string): Promise<void> {
     method: "POST",
     body: JSON.stringify({ summary }),
   });
+}
+
+// --- English training ---
+
+export function getEnglishSession(): Promise<EnglishSession | null> {
+  return request<EnglishSession | null>("/api/v1/english/session").catch((err) => {
+    if (err instanceof ApiError && err.status === 204) return null;
+    throw err;
+  });
+}
+
+export function submitEnglishAnswer(
+  item_id: number,
+  exercise_type: string,
+  answer: string,
+): Promise<EnglishAnswerResult> {
+  return request("/api/v1/english/answer", {
+    method: "POST",
+    body: JSON.stringify({ item_id, exercise_type, answer }),
+  });
+}
+
+export function getEnglishStats(): Promise<EnglishStats> {
+  return request("/api/v1/english/stats");
 }

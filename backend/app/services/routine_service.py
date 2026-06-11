@@ -12,25 +12,36 @@ SYSTEM_ROUTINE_ITEMS: dict[str, str] = {
     "study_session": "Study session completed (minimum 1 hour)",
     "daily_challenge": "Daily challenge attempted",
     "trail_review": "Review one concept from the learning trail",
+    "english_training": "Technical English session completed",
 }
 
 
 def ensure_items_seeded(db: Session, user_id: int) -> None:
-    """Seed system routine items for a user on first access. No-op if already seeded."""
-    count = db.scalar(
-        select(func.count()).select_from(UserRoutineItem).where(UserRoutineItem.user_id == user_id)
-    )
-    if count == 0:
-        for pos, (key, label) in enumerate(SYSTEM_ROUTINE_ITEMS.items()):
+    """Seed system routine items per-key — idempotent even when new items are added."""
+    existing_keys = {
+        row.item_key
+        for row in db.scalars(
+            select(UserRoutineItem).where(UserRoutineItem.user_id == user_id)
+        )
+    }
+    max_pos = db.scalar(
+        select(func.max(UserRoutineItem.position)).where(UserRoutineItem.user_id == user_id)
+    ) or -1
+
+    added = False
+    for pos, (key, label) in enumerate(SYSTEM_ROUTINE_ITEMS.items()):
+        if key not in existing_keys:
             db.add(UserRoutineItem(
                 user_id=user_id,
                 item_key=key,
                 label=label,
                 is_system=True,
                 is_active=True,
-                position=pos,
+                position=max(pos, max_pos + 1),
                 created_at=datetime.now(timezone.utc),
             ))
+            added = True
+    if added:
         db.commit()
 
 

@@ -128,3 +128,30 @@ export interface UserRoutineItem {
   is_active: boolean;
   position: number;
 }
+
+export interface EnglishExercise {
+  item_id: number;
+  exercise_type: "multiple_choice_vocab" | "fill_in_the_blank" | "translate_pt_en" | "translate_en_pt";
+  prompt: string;
+  choices: string[] | null;
+}
+
+export interface EnglishSession {
+  items: EnglishExercise[];
+  done_today: number;
+  due_today: number;
+}
+
+export interface EnglishAnswerResult {
+  correct: boolean;
+  correct_answer: string;
+  session_complete: boolean;
+}
+
+export interface EnglishStats {
+  due_today: number;
+  done_today: number;
+  pass_rate_7d: number;
+  mature_items: number;
+  total_items: number;
+}

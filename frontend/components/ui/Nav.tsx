@@ -12,6 +12,7 @@ const LINKS: { href: string; label: TKey }[] = [
   { href: "/routine", label: "nav.routine" },
   { href: "/challenges", label: "nav.challenge" },
   { href: "/review", label: "nav.review" },
+  { href: "/english", label: "nav.english" },
   { href: "/trail", label: "nav.trail" },
 ];
 

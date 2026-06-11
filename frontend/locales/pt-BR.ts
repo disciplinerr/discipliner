@@ -4,6 +4,7 @@ export const ptBR = {
   "nav.routine": "Rotina",
   "nav.challenge": "Desafio",
   "nav.review": "Revisão",
+  "nav.english": "Inglês",
   "nav.trail": "Trilha",
   "nav.settings": "Configurações",
   "nav.logout": "sair",
@@ -218,6 +219,33 @@ export const ptBR = {
     "Python e JS rodam no navegador. Java e C rodam no servidor.",
   "sandbox.loop_warning":
     "Loop infinito trava a aba. Ctrl+W é o preço da indisciplina.",
+
+  // English training
+  "english.title": "Inglês Técnico",
+  "english.subtitle": "Vocabulário do dia. Sem gamificação. Recall ativo.",
+  "english.due_today": "para hoje",
+  "english.done_today": "corretos hoje",
+  "english.mature": "consolidados",
+  "english.total": "total",
+  "english.session_progress": "de 15 corretos",
+  "english.type_multiple_choice": "Múltipla escolha — definição",
+  "english.type_fill_blank": "Complete a lacuna",
+  "english.type_translate_pt_en": "Traduza para inglês",
+  "english.type_translate_en_pt": "Traduza para português",
+  "english.submit": "Confirmar",
+  "english.submitting": "verificando...",
+  "english.nothing_due": "Nada pendente para hoje.",
+  "english.nothing_due_text": "Todos os itens foram revisados. Volte amanhã.",
+  "english.session_complete_title": "Sessão concluída.",
+  "english.session_complete_text": "15 respostas corretas. Rotina registrada automaticamente.",
+  "english.load_failed": "Falha ao carregar sessão",
+  "english.submit_failed": "Falha ao confirmar resposta",
+  "english.pass_rate": "acerto 7 dias",
+  "english.your_answer": "Sua resposta",
+  "english.type_answer": "Digite a resposta...",
+
+  // Routine item label
+  "routine.item.english_training": "Sessão de inglês técnico concluída",
 
   // Settings
   "settings.title": "Configurações",

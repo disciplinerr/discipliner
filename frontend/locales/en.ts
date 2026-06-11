@@ -6,6 +6,7 @@ export const en: Record<keyof typeof ptBR, string> = {
   "nav.routine": "Routine",
   "nav.challenge": "Challenge",
   "nav.review": "Review",
+  "nav.english": "English",
   "nav.trail": "Trail",
   "nav.settings": "Settings",
   "nav.logout": "logout",
@@ -220,6 +221,33 @@ export const en: Record<keyof typeof ptBR, string> = {
     "Python and JS run in the browser. Java and C run on the server.",
   "sandbox.loop_warning":
     "An infinite loop freezes the tab. Ctrl+W is the price of indiscipline.",
+
+  // English training
+  "english.title": "Technical English",
+  "english.subtitle": "Daily vocabulary. No gamification. Active recall.",
+  "english.due_today": "due today",
+  "english.done_today": "correct today",
+  "english.mature": "mature",
+  "english.total": "total",
+  "english.session_progress": "of 15 correct",
+  "english.type_multiple_choice": "Multiple choice — definition",
+  "english.type_fill_blank": "Fill in the blank",
+  "english.type_translate_pt_en": "Translate to English",
+  "english.type_translate_en_pt": "Translate to Portuguese",
+  "english.submit": "Submit",
+  "english.submitting": "checking...",
+  "english.nothing_due": "Nothing due today.",
+  "english.nothing_due_text": "All items reviewed. Come back tomorrow.",
+  "english.session_complete_title": "Session complete.",
+  "english.session_complete_text": "15 correct answers. Routine item logged automatically.",
+  "english.load_failed": "Failed to load session",
+  "english.submit_failed": "Failed to submit answer",
+  "english.pass_rate": "7-day accuracy",
+  "english.your_answer": "Your answer",
+  "english.type_answer": "Type your answer...",
+
+  // Routine item label
+  "routine.item.english_training": "Technical English session completed",
 
   // Settings
   "settings.title": "Settings",

@@ -204,3 +204,51 @@ class FallbackChallenge(Base):
     category: Mapped[str] = mapped_column(String(64), nullable=False)
     expected_output_example: Mapped[str] = mapped_column(Text, default="")
     constraints: Mapped[str] = mapped_column(Text, default="")
+
+
+class EnglishItem(Base):
+    """Vocabulary bank for technical English training."""
+
+    __tablename__ = "english_items"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    term: Mapped[str] = mapped_column(String(120), nullable=False)
+    term_pt: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    definition_en: Mapped[str] = mapped_column(Text, nullable=False)
+    definition_pt: Mapped[str] = mapped_column(Text, nullable=False)
+    example_sentence: Mapped[str | None] = mapped_column(Text, nullable=True)
+    category: Mapped[str] = mapped_column(String(60), nullable=False)
+    difficulty: Mapped[Difficulty] = mapped_column(Enum(Difficulty), nullable=False)
+    source: Mapped[str] = mapped_column(String(30), default="seed")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class EnglishProgress(Base):
+    """SM-2-lite state per user+item for spaced repetition of vocabulary."""
+
+    __tablename__ = "english_progress"
+    __table_args__ = (UniqueConstraint("user_id", "item_id", name="uq_english_progress_user_item"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
+    item_id: Mapped[int] = mapped_column(ForeignKey("english_items.id"), nullable=False)
+    ease: Mapped[float] = mapped_column(Float, default=2.5)
+    interval_days: Mapped[int] = mapped_column(Integer, default=0)
+    repetitions: Mapped[int] = mapped_column(Integer, default=0)
+    due_date: Mapped[date] = mapped_column(Date, nullable=False)
+    last_reviewed: Mapped[date | None] = mapped_column(Date, nullable=True)
+
+    item: Mapped["EnglishItem"] = relationship()
+
+
+class EnglishAttempt(Base):
+    """Log of individual exercise answers for stats and session tracking."""
+
+    __tablename__ = "english_attempts"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
+    item_id: Mapped[int] = mapped_column(ForeignKey("english_items.id"), nullable=False)
+    exercise_type: Mapped[str] = mapped_column(String(30), nullable=False)
+    correct: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    attempted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)

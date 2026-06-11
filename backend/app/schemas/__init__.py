@@ -201,3 +201,40 @@ class TrailProgressOut(BaseModel):
 
 class PhaseCompleteRequest(BaseModel):
     summary: str = Field(min_length=100, description="Written summary of what was learned")
+
+
+# --- English training ---
+
+class EnglishExercise(BaseModel):
+    item_id: int
+    exercise_type: str
+    prompt: str
+    choices: list[str] | None = None
+
+
+class EnglishSessionOut(BaseModel):
+    items: list[EnglishExercise]
+    done_today: int
+    due_today: int
+
+
+class EnglishAnswerRequest(BaseModel):
+    item_id: int
+    exercise_type: str = Field(
+        pattern="^(multiple_choice_vocab|fill_in_the_blank|translate_pt_en|translate_en_pt)$"
+    )
+    answer: str = Field(min_length=1, max_length=500)
+
+
+class EnglishAnswerResult(BaseModel):
+    correct: bool
+    correct_answer: str
+    session_complete: bool
+
+
+class EnglishStatsOut(BaseModel):
+    due_today: int
+    done_today: int
+    pass_rate_7d: float
+    mature_items: int
+    total_items: int
