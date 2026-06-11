@@ -51,8 +51,33 @@ class ChallengeOut(BaseModel):
 
 
 class SubmissionCreate(BaseModel):
-    math_derivation: str
+    math_derivation: str = ""
     code_submission: str = Field(min_length=1)
+
+
+class CodeExecuteRequest(BaseModel):
+    code: str = Field(max_length=32_000)
+    language: str = Field(pattern="^(java|c)$")
+
+
+class CodeExecuteResult(BaseModel):
+    output: str
+    error: bool
+
+
+class CustomChallengeRequest(BaseModel):
+    description: str = Field(min_length=3, max_length=500)
+    locale: str = Field(default="pt-BR", max_length=10)
+
+
+class CustomChallengeOut(BaseModel):
+    title: str
+    math_problem: str
+    programming_task: str
+    difficulty: str
+    category: str
+    expected_output_example: str
+    constraints: str
 
 
 class SubmissionOut(BaseModel):
@@ -90,6 +115,38 @@ class RoutineDayOut(BaseModel):
 
 class RoutineWeekOut(BaseModel):
     days: list[RoutineDayOut]
+
+
+class RoutineDaySummary(BaseModel):
+    date: date
+    done: int
+    total: int
+    skipped: int
+
+
+class RoutineMonthOut(BaseModel):
+    year: int
+    month: int
+    days: list[RoutineDaySummary]
+
+
+class UserRoutineItemOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    item_key: str
+    label: str
+    is_system: bool
+    is_active: bool
+    position: int
+
+
+class UserRoutineItemCreate(BaseModel):
+    label: str = Field(min_length=2, max_length=200)
+
+
+class UserRoutineItemToggle(BaseModel):
+    is_active: bool
 
 
 # --- Reviews (spaced repetition) ---

@@ -81,7 +81,7 @@ class ChallengeSubmission(Base):
         ForeignKey("daily_challenges.id"), nullable=False, index=True
     )
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
-    math_derivation: Mapped[str] = mapped_column(Text, nullable=False)
+    math_derivation: Mapped[str | None] = mapped_column(Text, nullable=True)
     code_submission: Mapped[str] = mapped_column(Text, nullable=False)
     result: Mapped[SubmissionResult] = mapped_column(
         Enum(SubmissionResult), default=SubmissionResult.PENDING
@@ -173,6 +173,22 @@ class ReviewCard(Base):
     )
 
     phase: Mapped["TrailPhase"] = relationship()
+
+
+class UserRoutineItem(Base):
+    """Per-user routine item. Seeded from system defaults on first access; user can add custom ones."""
+
+    __tablename__ = "user_routine_items"
+    __table_args__ = (UniqueConstraint("user_id", "item_key", name="uq_user_routine_item"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
+    item_key: Mapped[str] = mapped_column(String(64), nullable=False)
+    label: Mapped[str] = mapped_column(String(255), nullable=False)
+    is_system: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    position: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 
 class FallbackChallenge(Base):
