@@ -3,6 +3,7 @@ from datetime import date, datetime, time, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
@@ -107,7 +108,11 @@ def check_item(
         logged_at=now,
     )
     db.add(log)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="Item already logged for today")
     db.refresh(log)
 
     label = item.label if item else item_id
