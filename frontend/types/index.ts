@@ -91,3 +91,40 @@ export interface TrailProgress {
   current_phase: number;
   phases: PhaseProgress[];
 }
+
+export interface PreviewChallenge {
+  title: string;
+  math_problem: string;
+  programming_task: string;
+  difficulty: string;
+  category: string;
+  expected_output_example: string;
+  constraints: string;
+}
+
+export interface ExecuteResult {
+  output: string;
+  error: boolean;
+}
+
+export interface RoutineDaySummary {
+  date: string;
+  done: number;
+  total: number;
+  skipped: number;
+}
+
+export interface RoutineMonth {
+  year: number;
+  month: number;
+  days: RoutineDaySummary[];
+}
+
+export interface UserRoutineItem {
+  id: number;
+  item_key: string;
+  label: string;
+  is_system: boolean;
+  is_active: boolean;
+  position: number;
+}

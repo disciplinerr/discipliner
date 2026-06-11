@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import ChallengeRequestModal from "@/components/challenge/ChallengeRequestModal";
 import ChallengeView from "@/components/challenge/ChallengeView";
 import SubmissionForm from "@/components/challenge/SubmissionForm";
 import Card from "@/components/ui/Card";
@@ -18,13 +19,14 @@ const RESULT_BADGE: Record<string, string> = {
 };
 
 export default function ChallengesPage() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [challenge, setChallenge] = useState<Challenge | null>(null);
   const [history, setHistory] = useState<ChallengeHistoryItem[]>([]);
   const [error, setError] = useState("");
+  const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
-    getTodayChallenge()
+    getTodayChallenge(locale)
       .then(setChallenge)
       .catch((err) =>
         setError(err instanceof ApiError ? err.message : t("challenge.load_failed"))
@@ -35,9 +37,18 @@ export default function ChallengesPage() {
   return (
     <RequireAuth>
       <div className="space-y-6">
-        <div className="animate-fade-up">
-          <h1 className="text-3xl font-extrabold tracking-tight">{t("challenge.title")}</h1>
-          <p className="mt-1 text-secondary">{t("challenge.subtitle")}</p>
+        <div className="animate-fade-up flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-extrabold tracking-tight">{t("challenge.title")}</h1>
+            <p className="mt-1 text-secondary">{t("challenge.subtitle")}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setModalOpen(true)}
+            className="shrink-0 rounded-xl border border-line px-4 py-2 text-xs font-bold text-muted transition-colors hover:border-secondary hover:text-foreground"
+          >
+            {t("challenge.generate_custom")}
+          </button>
         </div>
 
         <Card>
@@ -90,6 +101,8 @@ export default function ChallengesPage() {
           )}
         </Card>
       </div>
+
+      {modalOpen && <ChallengeRequestModal onClose={() => setModalOpen(false)} />}
     </RequireAuth>
   );
 }

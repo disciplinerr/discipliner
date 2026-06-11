@@ -1,15 +1,19 @@
 import {
   Challenge,
   ChallengeHistoryItem,
+  ExecuteResult,
+  PreviewChallenge,
   ReviewCard,
   ReviewStats,
   RoutineDay,
   RoutineItem,
+  RoutineMonth,
   RoutineWeek,
   Submission,
   TokenPair,
   TrailProgress,
   User,
+  UserRoutineItem,
 } from "@/types";
 import { clearTokens, getAccessToken, getRefreshToken, setTokens } from "./auth";
 
@@ -98,23 +102,36 @@ export function getMe(): Promise<User> {
 
 // --- Challenges ---
 
-export function getTodayChallenge(): Promise<Challenge> {
-  return request("/api/v1/challenges/today");
+export function getTodayChallenge(locale = "pt-BR"): Promise<Challenge> {
+  return request(`/api/v1/challenges/today?locale=${encodeURIComponent(locale)}`);
 }
 
-export function submitChallenge(
-  id: number,
-  mathDerivation: string,
-  code: string
-): Promise<Submission> {
+export function submitChallenge(id: number, code: string): Promise<Submission> {
   return request(`/api/v1/challenges/${id}/submit`, {
     method: "POST",
-    body: JSON.stringify({ math_derivation: mathDerivation, code_submission: code }),
+    body: JSON.stringify({ code_submission: code }),
   });
 }
 
 export function getChallengeHistory(): Promise<ChallengeHistoryItem[]> {
   return request("/api/v1/challenges/history");
+}
+
+export function executeCode(code: string, language: string): Promise<ExecuteResult> {
+  return request("/api/v1/challenges/execute", {
+    method: "POST",
+    body: JSON.stringify({ code, language }),
+  });
+}
+
+export function generateCustomChallenge(
+  description: string,
+  locale: string
+): Promise<PreviewChallenge> {
+  return request("/api/v1/challenges/generate-custom", {
+    method: "POST",
+    body: JSON.stringify({ description, locale }),
+  });
 }
 
 // --- Routine ---
@@ -135,6 +152,32 @@ export function checkRoutineItem(
 
 export function getWeekRoutine(): Promise<RoutineWeek> {
   return request("/api/v1/routine/week");
+}
+
+export function getMonthRoutine(year: number, month: number): Promise<RoutineMonth> {
+  return request(`/api/v1/routine/month?year=${year}&month=${month}`);
+}
+
+export function getRoutineItems(): Promise<UserRoutineItem[]> {
+  return request("/api/v1/routine/items");
+}
+
+export function addRoutineItem(label: string): Promise<UserRoutineItem> {
+  return request("/api/v1/routine/items", {
+    method: "POST",
+    body: JSON.stringify({ label }),
+  });
+}
+
+export function toggleRoutineItem(itemKey: string, isActive: boolean): Promise<UserRoutineItem> {
+  return request(`/api/v1/routine/items/${itemKey}`, {
+    method: "PATCH",
+    body: JSON.stringify({ is_active: isActive }),
+  });
+}
+
+export function deleteRoutineItem(itemKey: string): Promise<void> {
+  return request(`/api/v1/routine/items/${itemKey}`, { method: "DELETE" });
 }
 
 // --- Reviews (spaced repetition) ---

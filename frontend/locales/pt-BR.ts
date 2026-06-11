@@ -62,6 +62,37 @@ export const ptBR = {
   "routine.legend_empty": "sem registro",
   "routine.not_logged": "não registrado",
 
+  // Routine calendar
+  "routine.calendar": "Calendário do mês",
+  "routine.calendar_all_done": "completo",
+  "routine.calendar_partial": "parcial",
+  "routine.calendar_missed": "perdido",
+  "routine.calendar_future": "futuro",
+
+  // Routine item manager
+  "routine.manage_items": "Gerenciar itens",
+  "routine.manage_items_hint": "Itens padrão podem ser desativados. Itens personalizados podem ser removidos.",
+  "routine.add_item": "Novo hábito",
+  "routine.add_item_placeholder": "Descrição do hábito...",
+  "routine.add_item_submit": "Adicionar",
+  "routine.item_system_badge": "padrão",
+  "routine.item_custom_badge": "personalizado",
+  "routine.item_active": "ativo",
+  "routine.item_inactive": "inativo",
+  "routine.item_delete": "remover",
+  "routine.item_add_failed": "Falha ao adicionar",
+  "routine.item_toggle_failed": "Falha ao atualizar",
+  "routine.item_delete_failed": "Falha ao remover",
+
+  // Routine reminders
+  "routine.reminders": "Lembretes",
+  "routine.reminder_enable": "Lembrete diário",
+  "routine.reminder_time": "Horário",
+  "routine.reminder_permission_btn": "Permitir notificações",
+  "routine.reminder_permission_denied": "Notificações bloqueadas no navegador.",
+  "routine.reminder_not_supported": "Navegador sem suporte a notificações.",
+  "routine.reminder_saved": "salvo",
+
   // Routine item labels (mirror backend item keys)
   "routine.item.wake_up_before_7": "Acordar antes das 7:00",
   "routine.item.no_unnecessary_spending": "Nenhum gasto desnecessário hoje",
@@ -162,6 +193,18 @@ export const ptBR = {
   "challenge.no_attempts": "Nenhuma tentativa ainda.",
   "challenge.new_attempt": "Nova tentativa",
   "challenge.not_found": "Desafio não encontrado.",
+  "challenge.notes_label": "Anotações e rascunho",
+  "challenge.notes_placeholder": "Espaço livre para cálculos, lógica e rascunhos. Não é enviado.",
+  "challenge.generate_custom": "+ Gerar desafio personalizado",
+  "challenge.modal_title": "Desafio personalizado",
+  "challenge.modal_description": "Descreva o tipo de desafio que quer praticar.",
+  "challenge.modal_placeholder": "Ex: grafos com BFS, recursão em árvores, ordenação...",
+  "challenge.modal_generate": "Gerar desafio",
+  "challenge.modal_generating": "gerando...",
+  "challenge.modal_close": "Fechar",
+  "challenge.modal_failed": "Falha ao gerar desafio. Tente novamente.",
+  "challenge.custom_badge": "personalizado",
+  "challenge.custom_practice": "Praticar no sandbox",
 
   // Sandbox
   "sandbox.title": "Sandbox — teste seu código",
@@ -172,7 +215,7 @@ export const ptBR = {
   "sandbox.output": "Saída",
   "sandbox.empty_output": "(sem saída)",
   "sandbox.note":
-    "Roda 100% no seu navegador. Sem IA, sem servidor — só você e o interpretador.",
+    "Python e JS rodam no navegador. Java e C rodam no servidor.",
   "sandbox.loop_warning":
     "Loop infinito trava a aba. Ctrl+W é o preço da indisciplina.",
 

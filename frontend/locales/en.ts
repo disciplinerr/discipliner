@@ -64,6 +64,37 @@ export const en: Record<keyof typeof ptBR, string> = {
   "routine.legend_empty": "not logged",
   "routine.not_logged": "not logged",
 
+  // Routine calendar
+  "routine.calendar": "Monthly calendar",
+  "routine.calendar_all_done": "complete",
+  "routine.calendar_partial": "partial",
+  "routine.calendar_missed": "missed",
+  "routine.calendar_future": "future",
+
+  // Routine item manager
+  "routine.manage_items": "Manage items",
+  "routine.manage_items_hint": "Default items can be deactivated. Custom items can be removed.",
+  "routine.add_item": "New habit",
+  "routine.add_item_placeholder": "Habit description...",
+  "routine.add_item_submit": "Add",
+  "routine.item_system_badge": "default",
+  "routine.item_custom_badge": "custom",
+  "routine.item_active": "active",
+  "routine.item_inactive": "inactive",
+  "routine.item_delete": "remove",
+  "routine.item_add_failed": "Failed to add",
+  "routine.item_toggle_failed": "Failed to update",
+  "routine.item_delete_failed": "Failed to remove",
+
+  // Routine reminders
+  "routine.reminders": "Reminders",
+  "routine.reminder_enable": "Daily reminder",
+  "routine.reminder_time": "Time",
+  "routine.reminder_permission_btn": "Allow notifications",
+  "routine.reminder_permission_denied": "Notifications blocked in browser.",
+  "routine.reminder_not_supported": "Browser does not support notifications.",
+  "routine.reminder_saved": "saved",
+
   // Routine item labels (mirror backend item keys)
   "routine.item.wake_up_before_7": "Wake up before 7:00 AM",
   "routine.item.no_unnecessary_spending": "No unnecessary spending today",
@@ -164,6 +195,18 @@ export const en: Record<keyof typeof ptBR, string> = {
   "challenge.no_attempts": "No attempts yet.",
   "challenge.new_attempt": "New attempt",
   "challenge.not_found": "Challenge not found.",
+  "challenge.notes_label": "Notes & scratch pad",
+  "challenge.notes_placeholder": "Free space for calculations, logic and drafts. Not submitted.",
+  "challenge.generate_custom": "+ Generate custom challenge",
+  "challenge.modal_title": "Custom challenge",
+  "challenge.modal_description": "Describe the type of challenge you want to practice.",
+  "challenge.modal_placeholder": "E.g.: graphs with BFS, tree recursion, sorting...",
+  "challenge.modal_generate": "Generate challenge",
+  "challenge.modal_generating": "generating...",
+  "challenge.modal_close": "Close",
+  "challenge.modal_failed": "Failed to generate challenge. Please try again.",
+  "challenge.custom_badge": "custom",
+  "challenge.custom_practice": "Practice in sandbox",
 
   // Sandbox
   "sandbox.title": "Sandbox — test your code",
@@ -174,7 +217,7 @@ export const en: Record<keyof typeof ptBR, string> = {
   "sandbox.output": "Output",
   "sandbox.empty_output": "(no output)",
   "sandbox.note":
-    "Runs 100% in your browser. No AI, no server — just you and the interpreter.",
+    "Python and JS run in the browser. Java and C run on the server.",
   "sandbox.loop_warning":
     "An infinite loop freezes the tab. Ctrl+W is the price of indiscipline.",
 
