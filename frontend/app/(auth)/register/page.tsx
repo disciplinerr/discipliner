@@ -6,6 +6,8 @@ import { FormEvent, useState } from "react";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Logo from "@/components/ui/Logo";
+import PasswordInput from "@/components/ui/PasswordInput";
+import PasswordRules, { passwordValid } from "@/components/ui/PasswordRules";
 import { ApiError, login, register } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 
@@ -19,6 +21,7 @@ export default function RegisterPage() {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    if (!passwordValid(password)) return;
     setError("");
     setBusy(true);
     try {
@@ -52,16 +55,21 @@ export default function RegisterPage() {
             onChange={(e) => setEmail(e.target.value)}
             required
           />
-          <Input
-            type="password"
-            placeholder={t("auth.password_hint")}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            minLength={8}
-            required
-          />
+          <div className="space-y-2">
+            <PasswordInput
+              placeholder={t("auth.password_hint")}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+            <PasswordRules password={password} />
+          </div>
           {error && <p className="text-sm text-red-400">{error}</p>}
-          <Button type="submit" disabled={busy} className="w-full">
+          <Button
+            type="submit"
+            disabled={busy || !passwordValid(password)}
+            className="w-full"
+          >
             {busy ? t("auth.register_busy") : t("auth.register")}
           </Button>
         </form>

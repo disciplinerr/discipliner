@@ -213,6 +213,25 @@ export function completePhase(phaseId: number, summary: string): Promise<void> {
   });
 }
 
+// --- Password reset ---
+
+export function forgotPassword(email: string): Promise<{ message: string }> {
+  return request("/api/v1/auth/forgot-password", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+}
+
+export function resetPassword(
+  token: string,
+  new_password: string,
+): Promise<{ message: string }> {
+  return request("/api/v1/auth/reset-password", {
+    method: "POST",
+    body: JSON.stringify({ token, new_password }),
+  });
+}
+
 // --- English training ---
 
 export function getEnglishSession(): Promise<EnglishSession | null> {

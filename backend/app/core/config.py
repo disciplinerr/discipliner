@@ -16,6 +16,13 @@ class Settings(BaseSettings):
 
     CORS_ORIGINS: str = "http://localhost:3000"
 
+    SMTP_HOST: str = ""
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_FROM: str = "Discipliner <noreply@discipliner.app>"
+    FRONTEND_URL: str = "http://localhost:3000"
+
     CLAUDE_MODEL: str = "claude-fable-5"
     CHALLENGE_MAX_TOKENS: int = 800
     EVALUATION_MAX_TOKENS: int = 100

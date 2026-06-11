@@ -6,6 +6,7 @@ import { FormEvent, useState } from "react";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Logo from "@/components/ui/Logo";
+import PasswordInput from "@/components/ui/PasswordInput";
 import { ApiError, login } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 
@@ -51,8 +52,7 @@ export default function LoginPage() {
             onChange={(e) => setEmail(e.target.value)}
             required
           />
-          <Input
-            type="password"
+          <PasswordInput
             placeholder={t("auth.password")}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -64,15 +64,23 @@ export default function LoginPage() {
           </Button>
         </form>
 
-        <p className="mt-5 text-center text-sm text-muted">
-          {t("auth.no_account")}{" "}
+        <div className="mt-4 flex flex-col items-center gap-3">
           <Link
-            href="/register"
-            className="font-semibold text-foreground underline-offset-4 hover:underline"
+            href="/forgot-password"
+            className="text-sm text-muted underline-offset-4 hover:text-foreground hover:underline"
           >
-            {t("auth.create_account")}
+            {t("auth.forgot_password")}
           </Link>
-        </p>
+          <p className="text-sm text-muted">
+            {t("auth.no_account")}{" "}
+            <Link
+              href="/register"
+              className="font-semibold text-foreground underline-offset-4 hover:underline"
+            >
+              {t("auth.create_account")}
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );
