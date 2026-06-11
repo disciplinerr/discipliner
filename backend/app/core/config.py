@@ -1,5 +1,7 @@
 from functools import lru_cache
+from typing import Any
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -8,14 +10,34 @@ class Settings(BaseSettings):
 
     DATABASE_URL: str = "postgresql://discipliner:discipliner@localhost:5432/discipliner"
     ANTHROPIC_API_KEY: str = ""
-    SECRET_KEY: str = "change-me"
+    SECRET_KEY: str = ""
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
+    CORS_ORIGINS: list[str] = ["http://localhost:3000"]
+
+    @field_validator("CORS_ORIGINS", mode="before")
+    @classmethod
+    def parse_cors_origins(cls, v: Any) -> list[str]:
+        if isinstance(v, str):
+            return [origin.strip() for origin in v.split(",") if origin.strip()]
+        return v
+
     CLAUDE_MODEL: str = "claude-fable-5"
     CHALLENGE_MAX_TOKENS: int = 800
     EVALUATION_MAX_TOKENS: int = 100
+
+    @field_validator("SECRET_KEY")
+    @classmethod
+    def secret_key_must_be_set(cls, v: str) -> str:
+        if not v or v in ("change-me", "secret", "dev"):
+            raise ValueError(
+                "SECRET_KEY must be set to a strong random value (e.g. openssl rand -hex 32)"
+            )
+        if len(v) < 32:
+            raise ValueError("SECRET_KEY must be at least 32 characters")
+        return v
 
 
 @lru_cache
