@@ -1,9 +1,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+import os
 
 from app.api.v1.router import api_router
 
-app = FastAPI(title="Discipliner API", version="1.0.0")
+_docs_url = os.getenv("DOCS_URL")
+docs_url = f"/{_docs_url.strip('/')}" if _docs_url else None
+
+app = FastAPI(title="Discipliner API", version="1.0.0", docs_url=docs_url)
 
 app.add_middleware(
     CORSMiddleware,
