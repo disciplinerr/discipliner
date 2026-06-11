@@ -26,7 +26,7 @@ def upgrade() -> None:
         sa.Column("category", sa.String(60), nullable=False),
         sa.Column(
             "difficulty",
-            sa.Enum("beginner", "intermediate", "advanced", name="difficulty"),
+            sa.Enum("beginner", "intermediate", "advanced", name="difficulty", create_type=False),
             nullable=False,
         ),
         sa.Column("source", sa.String(30), nullable=False, server_default="seed"),
