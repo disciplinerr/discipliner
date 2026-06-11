@@ -6,7 +6,6 @@ Create Date: 2026-06-11
 """
 
 from alembic import op
-import sqlalchemy as sa
 
 revision = "0005"
 down_revision = "0004"
@@ -15,53 +14,54 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.create_table(
-        "english_items",
-        sa.Column("id", sa.Integer(), primary_key=True),
-        sa.Column("term", sa.String(120), nullable=False),
-        sa.Column("term_pt", sa.String(120), nullable=True),
-        sa.Column("definition_en", sa.Text(), nullable=False),
-        sa.Column("definition_pt", sa.Text(), nullable=False),
-        sa.Column("example_sentence", sa.Text(), nullable=True),
-        sa.Column("category", sa.String(60), nullable=False),
-        sa.Column(
-            "difficulty",
-            sa.Enum("beginner", "intermediate", "advanced", name="difficulty", create_type=False),
-            nullable=False,
-        ),
-        sa.Column("source", sa.String(30), nullable=False, server_default="seed"),
-        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
-    )
+    # Use raw SQL so SQLAlchemy does not attempt to recreate the existing
+    # 'difficulty' enum type (already created in migration 0001).
+    op.execute("""
+        CREATE TABLE english_items (
+            id          SERIAL PRIMARY KEY,
+            term        VARCHAR(120) NOT NULL,
+            term_pt     VARCHAR(120),
+            definition_en TEXT NOT NULL,
+            definition_pt TEXT NOT NULL,
+            example_sentence TEXT,
+            category    VARCHAR(60) NOT NULL,
+            difficulty  difficulty NOT NULL,
+            source      VARCHAR(30) NOT NULL DEFAULT 'seed',
+            created_at  TIMESTAMPTZ NOT NULL
+        )
+    """)
 
-    op.create_table(
-        "english_progress",
-        sa.Column("id", sa.Integer(), primary_key=True),
-        sa.Column("user_id", sa.Integer(), sa.ForeignKey("users.id"), nullable=False),
-        sa.Column("item_id", sa.Integer(), sa.ForeignKey("english_items.id"), nullable=False),
-        sa.Column("ease", sa.Float(), nullable=False, server_default="2.5"),
-        sa.Column("interval_days", sa.Integer(), nullable=False, server_default="0"),
-        sa.Column("repetitions", sa.Integer(), nullable=False, server_default="0"),
-        sa.Column("due_date", sa.Date(), nullable=False),
-        sa.Column("last_reviewed", sa.Date(), nullable=True),
-        sa.UniqueConstraint("user_id", "item_id", name="uq_english_progress_user_item"),
-    )
-    op.create_index("ix_english_progress_user_id", "english_progress", ["user_id"])
+    op.execute("""
+        CREATE TABLE english_progress (
+            id            SERIAL PRIMARY KEY,
+            user_id       INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            item_id       INTEGER NOT NULL REFERENCES english_items(id) ON DELETE CASCADE,
+            ease          FLOAT NOT NULL DEFAULT 2.5,
+            interval_days INTEGER NOT NULL DEFAULT 0,
+            repetitions   INTEGER NOT NULL DEFAULT 0,
+            due_date      DATE NOT NULL,
+            last_reviewed DATE,
+            CONSTRAINT uq_english_progress_user_item UNIQUE (user_id, item_id)
+        )
+    """)
+    op.execute("CREATE INDEX ix_english_progress_user_id ON english_progress (user_id)")
 
-    op.create_table(
-        "english_attempts",
-        sa.Column("id", sa.Integer(), primary_key=True),
-        sa.Column("user_id", sa.Integer(), sa.ForeignKey("users.id"), nullable=False),
-        sa.Column("item_id", sa.Integer(), sa.ForeignKey("english_items.id"), nullable=False),
-        sa.Column("exercise_type", sa.String(30), nullable=False),
-        sa.Column("correct", sa.Boolean(), nullable=False),
-        sa.Column("attempted_at", sa.DateTime(timezone=True), nullable=False),
-    )
-    op.create_index("ix_english_attempts_user_id", "english_attempts", ["user_id"])
+    op.execute("""
+        CREATE TABLE english_attempts (
+            id            SERIAL PRIMARY KEY,
+            user_id       INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            item_id       INTEGER NOT NULL REFERENCES english_items(id) ON DELETE CASCADE,
+            exercise_type VARCHAR(30) NOT NULL,
+            correct       BOOLEAN NOT NULL,
+            attempted_at  TIMESTAMPTZ NOT NULL
+        )
+    """)
+    op.execute("CREATE INDEX ix_english_attempts_user_id ON english_attempts (user_id)")
 
 
 def downgrade() -> None:
-    op.drop_index("ix_english_attempts_user_id", table_name="english_attempts")
-    op.drop_table("english_attempts")
-    op.drop_index("ix_english_progress_user_id", table_name="english_progress")
-    op.drop_table("english_progress")
-    op.drop_table("english_items")
+    op.execute("DROP INDEX IF EXISTS ix_english_attempts_user_id")
+    op.execute("DROP TABLE IF EXISTS english_attempts")
+    op.execute("DROP INDEX IF EXISTS ix_english_progress_user_id")
+    op.execute("DROP TABLE IF EXISTS english_progress")
+    op.execute("DROP TABLE IF EXISTS english_items")
