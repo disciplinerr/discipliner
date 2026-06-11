@@ -1,9 +1,7 @@
 "use client";
 
 import { useI18n } from "@/lib/i18n";
-import { Challenge } from "@/types";
-
-
+import { Challenge, PreviewChallenge } from "@/types";
 
 function Section({ label, children, mono = false }: {
   label: string;
@@ -26,7 +24,7 @@ function Section({ label, children, mono = false }: {
   );
 }
 
-export default function ChallengeView({ challenge }: { challenge: Challenge }) {
+export default function ChallengeView({ challenge }: { challenge: Challenge | PreviewChallenge }) {
   const { t } = useI18n();
   const difficultyLabel: Record<string, string> = {
     beginner: t("challenge.difficulty_beginner"),
@@ -43,7 +41,9 @@ export default function ChallengeView({ challenge }: { challenge: Challenge }) {
           <span className="rounded-full border border-line px-2.5 py-0.5 text-xs font-bold text-secondary">
             {difficultyLabel[challenge.difficulty] ?? challenge.difficulty}
           </span>
-          <span className="text-xs font-semibold text-muted">{challenge.date}</span>
+          {"date" in challenge && challenge.date && (
+            <span className="text-xs font-semibold text-muted">{challenge.date}</span>
+          )}
         </div>
         <h1 className="text-2xl font-extrabold tracking-tight">{challenge.title}</h1>
       </div>
