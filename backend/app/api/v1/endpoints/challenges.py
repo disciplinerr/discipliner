@@ -1,4 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException
+import os
+import re
+import subprocess
+import tempfile
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -8,23 +12,33 @@ from app.models import ChallengeSubmission, DailyChallenge, SubmissionResult, Us
 from app.schemas import (
     ChallengeHistoryItem,
     ChallengeOut,
+    CodeExecuteRequest,
+    CodeExecuteResult,
+    CustomChallengeOut,
+    CustomChallengeRequest,
     SubmissionCreate,
     SubmissionOut,
 )
 from app.services.challenge_generator import (
     evaluate_submission,
+    generate_custom_challenge,
     get_or_create_today_challenge,
 )
 from app.services.routine_service import log_item_if_absent
 
 router = APIRouter(prefix="/challenges", tags=["challenges"])
 
+_EXEC_TIMEOUT = 5  # seconds per run
+_COMPILE_TIMEOUT = 10
+
 
 @router.get("/today", response_model=ChallengeOut)
 def today_challenge(
-    current_user: User = Depends(get_current_user), db: Session = Depends(get_db)
+    locale: str = Query(default="pt-BR", max_length=10),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
-    return get_or_create_today_challenge(db, current_user)
+    return get_or_create_today_challenge(db, current_user, locale)
 
 
 @router.post("/{challenge_id}/submit", response_model=SubmissionOut)
@@ -34,13 +48,6 @@ def submit(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    # Non-negotiable rule 5: math derivation is required, minimum 50 characters.
-    if len(payload.math_derivation.strip()) < 50:
-        raise HTTPException(
-            status_code=422,
-            detail="math_derivation is required (minimum 50 characters). Write your derivation.",
-        )
-
     challenge = db.get(DailyChallenge, challenge_id)
     if challenge is None or challenge.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Challenge not found")
@@ -49,13 +56,12 @@ def submit(
     submission = ChallengeSubmission(
         challenge_id=challenge.id,
         user_id=current_user.id,
-        math_derivation=payload.math_derivation,
+        math_derivation=payload.math_derivation or None,
         code_submission=payload.code_submission,
         result=SubmissionResult(result),
         reason=reason,
     )
     db.add(submission)
-    # Attempting the challenge fulfills the "daily_challenge" routine item.
     log_item_if_absent(db, current_user.id, "daily_challenge")
     db.commit()
     db.refresh(submission)
@@ -81,3 +87,85 @@ def history(
         )
         for c in challenges
     ]
+
+
+@router.post("/execute", response_model=CodeExecuteResult)
+def execute_code(
+    payload: CodeExecuteRequest,
+    current_user: User = Depends(get_current_user),
+):
+    """Run Java or C code server-side in a temp directory. Personal app — no multi-tenant sandboxing."""
+    try:
+        if payload.language == "java":
+            output = _run_java(payload.code)
+        else:
+            output = _run_c(payload.code)
+        error = any(
+            marker in output
+            for marker in ("error:", "error\n", "Exception", "cannot find symbol")
+        )
+        return CodeExecuteResult(output=output[:8000], error=error)
+    except subprocess.TimeoutExpired:
+        return CodeExecuteResult(output="Timeout: execução excedeu 5 segundos.", error=True)
+    except Exception as exc:
+        return CodeExecuteResult(output=str(exc), error=True)
+
+
+@router.post("/generate-custom", response_model=CustomChallengeOut)
+def generate_custom(
+    payload: CustomChallengeRequest,
+    current_user: User = Depends(get_current_user),
+):
+    try:
+        data = generate_custom_challenge(payload.description, payload.locale)
+        return CustomChallengeOut(**{k: str(v) for k, v in data.items()})
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Generation failed: {exc}")
+
+
+def _run_java(code: str) -> str:
+    with tempfile.TemporaryDirectory() as tmpdir:
+        match = re.search(r"public\s+class\s+(\w+)", code)
+        classname = match.group(1) if match else "Main"
+        srcfile = os.path.join(tmpdir, f"{classname}.java")
+        with open(srcfile, "w") as f:
+            f.write(code)
+        compile_result = subprocess.run(
+            ["javac", srcfile],
+            capture_output=True,
+            text=True,
+            timeout=_COMPILE_TIMEOUT,
+            cwd=tmpdir,
+        )
+        if compile_result.returncode != 0:
+            return compile_result.stderr or compile_result.stdout
+        run_result = subprocess.run(
+            ["java", "-cp", tmpdir, "-Xmx128m", "-Xss2m", classname],
+            capture_output=True,
+            text=True,
+            timeout=_EXEC_TIMEOUT,
+        )
+        return (run_result.stdout + run_result.stderr).strip()
+
+
+def _run_c(code: str) -> str:
+    with tempfile.TemporaryDirectory() as tmpdir:
+        srcfile = os.path.join(tmpdir, "main.c")
+        outfile = os.path.join(tmpdir, "main")
+        with open(srcfile, "w") as f:
+            f.write(code)
+        compile_result = subprocess.run(
+            ["gcc", "-o", outfile, srcfile, "-lm", "-Wall"],
+            capture_output=True,
+            text=True,
+            timeout=_COMPILE_TIMEOUT,
+        )
+        if compile_result.returncode != 0:
+            return compile_result.stderr or compile_result.stdout
+        run_result = subprocess.run(
+            [outfile],
+            capture_output=True,
+            text=True,
+            timeout=_EXEC_TIMEOUT,
+        )
+        return (run_result.stdout + run_result.stderr).strip()
