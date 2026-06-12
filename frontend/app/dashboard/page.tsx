@@ -2,11 +2,15 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import StreakBadge from "@/components/dashboard/StreakBadge";
+import StatRing from "@/components/dashboard/StatRing";
+import WeekBars from "@/components/dashboard/WeekBars";
 import Card from "@/components/ui/Card";
 import ProgressBar from "@/components/ui/ProgressBar";
 import RequireAuth from "@/components/ui/RequireAuth";
 import {
   getChallengeHistory,
+  getDashboardStats,
   getReviewStats,
   getTodayRoutine,
   getTrailProgress,
@@ -14,6 +18,7 @@ import {
 import { routineLabel, useI18n } from "@/lib/i18n";
 import {
   ChallengeHistoryItem,
+  DashboardStats,
   ReviewStats,
   RoutineDay,
   TrailProgress,
@@ -32,27 +37,34 @@ export default function DashboardPage() {
   const [history, setHistory] = useState<ChallengeHistoryItem[] | null>(null);
   const [trail, setTrail] = useState<TrailProgress | null>(null);
   const [reviews, setReviews] = useState<ReviewStats | null>(null);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
 
   useEffect(() => {
     getTodayRoutine().then(setRoutine).catch(() => {});
     getChallengeHistory().then(setHistory).catch(() => {});
     getTrailProgress().then(setTrail).catch(() => {});
     getReviewStats().then(setReviews).catch(() => {});
+    getDashboardStats().then(setStats).catch(() => {});
   }, []);
 
   const routineDone = routine
     ? routine.items.filter((i) => i.status !== null).length
     : 0;
   const routineTotal = routine?.items.length ?? 0;
+  const routinePct = routineTotal > 0 ? Math.round((routineDone / routineTotal) * 100) : 0;
 
   const today = new Date().toISOString().slice(0, 10);
   const todayItem = history?.find((h) => h.challenge.date === today);
   const challengeResult = todayItem?.submissions[0]?.result ?? null;
 
   const currentPhase = trail?.phases.find((p) => p.is_current);
-  const completedPhases =
-    trail?.phases.filter((p) => p.completed_at !== null).length ?? 0;
+  const completedPhases = trail?.phases.filter((p) => p.completed_at !== null).length ?? 0;
   const totalPhases = trail?.phases.length ?? 6;
+  const trailPct = totalPhases > 0 ? Math.round((completedPhases / totalPhases) * 100) : 0;
+
+  const reviewDone = reviews?.reviewed_today ?? 0;
+  const reviewTotal = (reviews?.reviewed_today ?? 0) + (reviews?.due ?? 0);
+  const reviewPct = reviewTotal > 0 ? Math.round((reviewDone / reviewTotal) * 100) : 100;
 
   const hour = new Date().getHours();
   const greeting =
@@ -65,6 +77,7 @@ export default function DashboardPage() {
   return (
     <RequireAuth>
       <div className="space-y-6">
+        {/* Header */}
         <div className="animate-fade-up">
           <h1 className="text-3xl font-extrabold tracking-tight">{greeting}</h1>
           <p className="mt-1 text-secondary">
@@ -76,6 +89,7 @@ export default function DashboardPage() {
           </p>
         </div>
 
+        {/* Summary cards */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Link href="/routine" className="group">
             <Card className="h-full transition-colors group-hover:border-muted">
@@ -153,8 +167,8 @@ export default function DashboardPage() {
                   : t("dashboard.pending_cards")}
               </p>
               <ProgressBar
-                value={reviews?.reviewed_today ?? 0}
-                total={(reviews?.reviewed_today ?? 0) + (reviews?.due ?? 0)}
+                value={reviewDone}
+                total={reviewTotal}
               />
             </Card>
           </Link>
@@ -184,6 +198,54 @@ export default function DashboardPage() {
           </Link>
         </div>
 
+        {/* Progress analytics row */}
+        <div className="grid gap-4 lg:grid-cols-3">
+          {/* 7-day routine bars */}
+          <Card className="lg:col-span-2">
+            <div className="mb-4 flex items-center justify-between">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted">
+                Routine — last 7 days
+              </p>
+              {stats && (
+                <StreakBadge streak={stats.routine_streak} />
+              )}
+            </div>
+            {stats ? (
+              <WeekBars days={stats.routine_7d} />
+            ) : (
+              <div className="h-24 animate-pulse rounded-lg bg-elevated" />
+            )}
+          </Card>
+
+          {/* Stat rings */}
+          <Card>
+            <p className="mb-4 text-xs font-bold uppercase tracking-[0.18em] text-muted">
+              Completion rates
+            </p>
+            <div className="flex items-center justify-around gap-2">
+              <StatRing
+                value={routinePct}
+                label="Routine"
+                sublabel="today"
+                color="rgba(255,255,255,0.85)"
+              />
+              <StatRing
+                value={reviewPct}
+                label="Review"
+                sublabel="today"
+                color="rgba(255,255,255,0.55)"
+              />
+              <StatRing
+                value={stats?.english_accuracy_7d ?? 0}
+                label="English"
+                sublabel="7-day acc."
+                color="rgba(255,255,255,0.35)"
+              />
+            </div>
+          </Card>
+        </div>
+
+        {/* Pending today */}
         {routine && routineDone < routineTotal && (
           <Card title={t("dashboard.pending_today")}>
             <ul className="space-y-2">

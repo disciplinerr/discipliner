@@ -155,3 +155,16 @@ export interface EnglishStats {
   mature_items: number;
   total_items: number;
 }
+
+export interface RoutineDayBar {
+  date: string;
+  done: number;
+  total: number;
+  pct: number;
+}
+
+export interface DashboardStats {
+  routine_streak: number;
+  routine_7d: RoutineDayBar[];
+  english_accuracy_7d: number;
+}

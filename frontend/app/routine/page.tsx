@@ -99,7 +99,7 @@ export default function RoutinePage() {
       {showManager && (
         <RoutineItemManagerModal
           onClose={() => setShowManager(false)}
-          onChanged={() => { load(); setShowManager(false); }}
+          onChanged={load}
         />
       )}
     </RequireAuth>

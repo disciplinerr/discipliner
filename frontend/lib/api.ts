@@ -1,6 +1,7 @@
 import {
   Challenge,
   ChallengeHistoryItem,
+  DashboardStats,
   EnglishAnswerResult,
   EnglishSession,
   EnglishStats,
@@ -254,4 +255,8 @@ export function submitEnglishAnswer(
 
 export function getEnglishStats(): Promise<EnglishStats> {
   return request("/api/v1/english/stats");
+}
+
+export function getDashboardStats(): Promise<DashboardStats> {
+  return request("/api/v1/dashboard/stats");
 }
