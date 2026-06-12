@@ -17,7 +17,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Discipliner",
+  title: "discipliner",
   description: "Discipline and study tracker. No shortcuts.",
 };
 
