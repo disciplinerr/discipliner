@@ -55,7 +55,7 @@ export default function StatRing({
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-lg font-extrabold leading-none">{value}%</span>
+          <span className="text-sm font-extrabold leading-none tabular-nums">{value}%</span>
         </div>
       </div>
       <div className="text-center">

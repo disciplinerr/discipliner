@@ -222,21 +222,24 @@ export default function DashboardPage() {
             <p className="mb-4 text-xs font-bold uppercase tracking-[0.18em] text-muted">
               Completion rates
             </p>
-            <div className="flex items-center justify-around gap-2">
+            <div className="grid grid-cols-3 items-center gap-1">
               <StatRing
                 value={routinePct}
+                size={72}
                 label="Routine"
                 sublabel="today"
                 color="rgba(255,255,255,0.85)"
               />
               <StatRing
                 value={reviewPct}
+                size={72}
                 label="Review"
                 sublabel="today"
                 color="rgba(255,255,255,0.55)"
               />
               <StatRing
                 value={stats?.english_accuracy_7d ?? 0}
+                size={72}
                 label="English"
                 sublabel="7-day acc."
                 color="rgba(255,255,255,0.35)"
