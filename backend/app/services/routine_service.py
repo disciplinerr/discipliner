@@ -55,10 +55,22 @@ def get_active_items(db: Session, user_id: int) -> list[UserRoutineItem]:
 
 
 def get_all_items(db: Session, user_id: int) -> list[UserRoutineItem]:
+    """
+    Returns items for the management modal.
+    Inactive system items are excluded — they were intentionally deleted by the user.
+    Inactive custom items are included so the user can re-activate them.
+    """
     ensure_items_seeded(db, user_id)
+    from sqlalchemy import or_
     return list(db.scalars(
         select(UserRoutineItem)
-        .where(UserRoutineItem.user_id == user_id)
+        .where(
+            UserRoutineItem.user_id == user_id,
+            or_(
+                UserRoutineItem.is_system.is_(False),
+                UserRoutineItem.is_active.is_(True),
+            ),
+        )
         .order_by(UserRoutineItem.position)
     ).all())
 
@@ -110,6 +122,27 @@ def delete_custom_item(db: Session, user_id: int, item_key: str) -> bool:
     if item is None:
         return False
     db.delete(item)
+    db.commit()
+    return True
+
+
+def delete_any_item(db: Session, user_id: int, item_key: str) -> bool:
+    """
+    Custom items: delete the row entirely.
+    System items: deactivate (row must stay so ensure_items_seeded won't re-add it).
+    """
+    item = db.scalar(
+        select(UserRoutineItem).where(
+            UserRoutineItem.user_id == user_id,
+            UserRoutineItem.item_key == item_key,
+        )
+    )
+    if item is None:
+        return False
+    if item.is_system:
+        item.is_active = False
+    else:
+        db.delete(item)
     db.commit()
     return True
 

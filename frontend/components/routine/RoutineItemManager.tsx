@@ -92,16 +92,14 @@ export default function RoutineItemManager({ onChanged }: { onChanged: () => voi
               >
                 {item.is_active ? t("routine.item_active") : t("routine.item_inactive")}
               </button>
-              {!item.is_system && (
-                <button
-                  type="button"
-                  onClick={() => handleDelete(item)}
-                  disabled={busy === item.item_key}
-                  className="rounded-full border border-line px-2.5 py-1 text-[11px] font-bold text-red-400 transition-colors hover:border-red-400 disabled:opacity-40"
-                >
-                  {t("routine.item_delete")}
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => handleDelete(item)}
+                disabled={busy === item.item_key}
+                className="rounded-full border border-line px-2.5 py-1 text-[11px] font-bold text-red-400 transition-colors hover:border-red-400 disabled:opacity-40"
+              >
+                {t("routine.item_delete")}
+              </button>
             </div>
           </li>
         ))}

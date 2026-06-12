@@ -22,6 +22,7 @@ from app.schemas import (
 )
 from app.services.routine_service import (
     create_custom_item,
+    delete_any_item,
     delete_custom_item,
     get_active_items,
     get_all_items,
@@ -216,5 +217,5 @@ def remove_item(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    if not delete_custom_item(db, current_user.id, item_key):
-        raise HTTPException(status_code=404, detail="Custom item not found")
+    if not delete_any_item(db, current_user.id, item_key):
+        raise HTTPException(status_code=404, detail="Item not found")
