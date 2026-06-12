@@ -9,7 +9,8 @@ import logging
 import random
 from datetime import date, datetime, timedelta, timezone
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.orm import Session
 
 from app.models import Difficulty, EnglishAttempt, EnglishItem, EnglishProgress, User
@@ -74,23 +75,20 @@ def seed_progress(db: Session, user: User) -> None:
     items = db.scalars(
         select(EnglishItem).where(EnglishItem.difficulty.in_(difficulties))
     ).all()
-
-    existing_ids = {
-        row.item_id
-        for row in db.scalars(
-            select(EnglishProgress).where(EnglishProgress.user_id == user.id)
-        )
-    }
+    if not items:
+        return
 
     today = date.today()
-    new_rows = [
-        EnglishProgress(user_id=user.id, item_id=item.id, due_date=today)
-        for item in items
-        if item.id not in existing_ids
-    ]
-    if new_rows:
-        db.add_all(new_rows)
-        db.commit()
+    stmt = (
+        pg_insert(EnglishProgress)
+        .values([
+            {"user_id": user.id, "item_id": item.id, "due_date": today}
+            for item in items
+        ])
+        .on_conflict_do_nothing(index_elements=["user_id", "item_id"])
+    )
+    db.execute(stmt)
+    db.commit()
 
 
 def get_session(db: Session, user: User) -> list[dict]:
