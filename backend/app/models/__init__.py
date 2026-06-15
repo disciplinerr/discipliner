@@ -35,6 +35,21 @@ class SubmissionResult(str, enum.Enum):
     PENDING = "PENDING"
 
 
+class TransactionKind(str, enum.Enum):
+    """Cash flow direction of a money movement."""
+
+    EXPENSE = "EXPENSE"
+    INCOME = "INCOME"
+
+
+class BudgetGroup(str, enum.Enum):
+    """50/30/20 rule buckets used to balance a monthly budget."""
+
+    NEEDS = "NEEDS"      # essentials: rent, food, bills (target ~50%)
+    WANTS = "WANTS"      # lifestyle: leisure, dining out (target ~30%)
+    SAVINGS = "SAVINGS"  # savings + debt payoff (target ~20%)
+
+
 class RoutineStatus(str, enum.Enum):
     DONE = "DONE"
     LATE = "LATE"
@@ -47,6 +62,7 @@ class User(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
+    is_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     current_phase: Mapped[int] = mapped_column(Integer, default=1)
 
@@ -217,6 +233,25 @@ class PasswordResetToken(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 
+class EmailVerificationToken(Base):
+    """One-time token emailed on registration to prove control of the address.
+
+    Mirrors PasswordResetToken: short-lived, single-use. Consuming a valid token
+    flips the owning user's is_verified flag to True.
+    """
+
+    __tablename__ = "email_verification_tokens"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    token: Mapped[str] = mapped_column(String(128), nullable=False, unique=True, index=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    used: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
 class EnglishItem(Base):
     """Vocabulary bank for technical English training."""
 
@@ -263,3 +298,135 @@ class EnglishAttempt(Base):
     exercise_type: Mapped[str] = mapped_column(String(30), nullable=False)
     correct: Mapped[bool] = mapped_column(Boolean, nullable=False)
     attempted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+# ── Finance / expense control ───────────────────────────────────────────────
+
+
+class ExpenseCategory(Base):
+    """A spending category (an "envelope"). Carries its own monthly budget and
+    a 50/30/20 group so the overview can roll spending up into Needs/Wants/Savings.
+    Seeded with sensible defaults per user on first access; user can add custom ones."""
+
+    __tablename__ = "expense_categories"
+    __table_args__ = (UniqueConstraint("user_id", "category_key", name="uq_expense_category_key"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
+    category_key: Mapped[str] = mapped_column(String(64), nullable=False)
+    name: Mapped[str] = mapped_column(String(120), nullable=False)
+    emoji: Mapped[str] = mapped_column(String(8), default="💸")
+    color: Mapped[str] = mapped_column(String(9), default="#a3a3a3")
+    group: Mapped[BudgetGroup] = mapped_column(Enum(BudgetGroup), default=BudgetGroup.NEEDS)
+    monthly_budget: Mapped[float] = mapped_column(Float, default=0.0)
+    is_system: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    position: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class Transaction(Base):
+    """A single money movement (expense or income) on a given day."""
+
+    __tablename__ = "transactions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
+    category_id: Mapped[int | None] = mapped_column(
+        ForeignKey("expense_categories.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    description: Mapped[str] = mapped_column(String(255), nullable=False)
+    amount: Mapped[float] = mapped_column(Float, nullable=False)
+    kind: Mapped[TransactionKind] = mapped_column(
+        Enum(TransactionKind), default=TransactionKind.EXPENSE
+    )
+    date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+    category: Mapped["ExpenseCategory | None"] = relationship()
+
+
+class RecurringBill(Base):
+    """A fixed monthly obligation ("conta a pagar"): rent, subscriptions, loans.
+    Has a due day-of-month; whether it is paid for a given month lives in BillPayment."""
+
+    __tablename__ = "recurring_bills"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
+    category_id: Mapped[int | None] = mapped_column(
+        ForeignKey("expense_categories.id", ondelete="SET NULL"), nullable=True
+    )
+    name: Mapped[str] = mapped_column(String(120), nullable=False)
+    amount: Mapped[float] = mapped_column(Float, nullable=False)
+    due_day: Mapped[int] = mapped_column(Integer, nullable=False)  # 1..31
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+    category: Mapped["ExpenseCategory | None"] = relationship()
+
+
+class BillPayment(Base):
+    """Marks a RecurringBill as paid for a specific (year, month)."""
+
+    __tablename__ = "bill_payments"
+    __table_args__ = (
+        UniqueConstraint("bill_id", "year", "month", name="uq_bill_payment_period"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    bill_id: Mapped[int] = mapped_column(
+        ForeignKey("recurring_bills.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
+    year: Mapped[int] = mapped_column(Integer, nullable=False)
+    month: Mapped[int] = mapped_column(Integer, nullable=False)
+    amount: Mapped[float] = mapped_column(Float, nullable=False)
+    paid_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class Installment(Base):
+    """A financed purchase paid in a fixed number of equal monthly charges
+    ("parcelamento"): e.g. 10x of R$200 starting Mar/2026.
+
+    Unlike a RecurringBill (open-ended), an installment plan has a finite span.
+    The schedule is fully derived from (start_year, start_month, total_installments)
+    — we don't store one row per charge; the service projects it onto any month
+    and computes which installment number falls there and how many remain."""
+
+    __tablename__ = "installments"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
+    category_id: Mapped[int | None] = mapped_column(
+        ForeignKey("expense_categories.id", ondelete="SET NULL"), nullable=True
+    )
+    description: Mapped[str] = mapped_column(String(255), nullable=False)
+    installment_amount: Mapped[float] = mapped_column(Float, nullable=False)  # value per month
+    total_installments: Mapped[int] = mapped_column(Integer, nullable=False)  # how many months
+    start_year: Mapped[int] = mapped_column(Integer, nullable=False)
+    start_month: Mapped[int] = mapped_column(Integer, nullable=False)  # 1..12
+    due_day: Mapped[int] = mapped_column(Integer, default=1)  # day-of-month each charge lands
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+    category: Mapped["ExpenseCategory | None"] = relationship()
+
+
+class SavingsGoal(Base):
+    """A savings target the user works toward ("meta de economia"): a name, a
+    target amount, and the amount accumulated so far. Progress is tracked by
+    editing current_amount (e.g. via the contribute endpoint)."""
+
+    __tablename__ = "savings_goals"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
+    name: Mapped[str] = mapped_column(String(120), nullable=False)
+    target_amount: Mapped[float] = mapped_column(Float, nullable=False)
+    current_amount: Mapped[float] = mapped_column(Float, default=0.0)
+    emoji: Mapped[str] = mapped_column(String(8), default="🎯")
+    color: Mapped[str] = mapped_column(String(9), default="#4ade80")
+    deadline: Mapped[date | None] = mapped_column(Date, nullable=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)

@@ -19,6 +19,54 @@ FRONTEND_URL=https://yourdomain.com
 
 ---
 
+## Option 0 — Mailpit (local testing, no real delivery)
+
+For testing the **verification** and **reset** flows locally without a real
+inbox, use [Mailpit](https://github.com/axllent/mailpit): a fake SMTP server
+that captures every message and shows it in a web UI. It is already wired into
+`docker-compose.yml` as the `mailpit` service.
+
+```env
+SMTP_HOST=mailpit
+SMTP_PORT=1025
+SMTP_USER=
+SMTP_PASSWORD=
+SMTP_FROM=Discipliner <noreply@discipliner.app>
+FRONTEND_URL=http://localhost:3000
+```
+
+Then:
+
+```bash
+docker compose up -d mailpit
+docker compose up -d --build backend   # rebuild so code/env changes apply
+```
+
+- **Web UI:** http://localhost:8025 — open the captured email and click the
+  confirmation/reset button to test the full flow.
+- **SMTP port:** 1025 (plain, no TLS, no auth). Mailpit runs with
+  `MP_SMTP_AUTH_ACCEPT_ANY` + `MP_SMTP_AUTH_ALLOW_INSECURE`, and `_send()`
+  skips STARTTLS/login when the server doesn't advertise them or `SMTP_USER`
+  is empty — so the same code works with both Mailpit and real providers.
+
+Quick check from the CLI:
+
+```bash
+# trigger a verification email
+curl -s -X POST http://localhost:8000/api/v1/auth/register \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"test@example.com","password":"StrongPass123!","password_confirm":"StrongPass123!"}'
+
+# confirm it landed in Mailpit
+curl -s http://localhost:8025/api/v1/messages | python3 -m json.tool
+```
+
+> **Note:** editing `email_service.py` or SMTP env vars requires a rebuild
+> (`docker compose up -d --build backend`). `--force-recreate` alone reuses the
+> old image and your changes won't apply.
+
+---
+
 ## Option 1 — Gmail (personal / Google Workspace)
 
 Google requires an **App Password** (not your account password).

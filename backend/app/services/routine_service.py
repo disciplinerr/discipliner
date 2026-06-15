@@ -2,6 +2,7 @@ import uuid
 from datetime import date, datetime, timezone
 
 from sqlalchemy import func, select
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.orm import Session
 
 from app.models import RoutineLog, RoutineStatus, UserRoutineItem
@@ -28,20 +29,27 @@ def ensure_items_seeded(db: Session, user_id: int) -> None:
         select(func.max(UserRoutineItem.position)).where(UserRoutineItem.user_id == user_id)
     ) or -1
 
-    added = False
+    now = datetime.now(timezone.utc)
+    rows = []
     for pos, (key, label) in enumerate(SYSTEM_ROUTINE_ITEMS.items()):
         if key not in existing_keys:
-            db.add(UserRoutineItem(
-                user_id=user_id,
-                item_key=key,
-                label=label,
-                is_system=True,
-                is_active=True,
-                position=max(pos, max_pos + 1),
-                created_at=datetime.now(timezone.utc),
-            ))
-            added = True
-    if added:
+            rows.append({
+                "user_id": user_id,
+                "item_key": key,
+                "label": label,
+                "is_system": True,
+                "is_active": True,
+                "position": max(pos, max_pos + 1),
+                "created_at": now,
+            })
+    if rows:
+        # Parallel reads can race to seed the same keys; ON CONFLICT DO NOTHING
+        # makes the insert atomic so the loser is ignored instead of raising
+        # uq_user_routine_item.
+        stmt = pg_insert(UserRoutineItem).values(rows).on_conflict_do_nothing(
+            constraint="uq_user_routine_item"
+        )
+        db.execute(stmt)
         db.commit()
 
 
