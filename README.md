@@ -67,6 +67,7 @@ Instruções completas: [docs/setup.md](docs/setup.md)
 - [Referência da API](docs/api.md)
 - [Trilha de aprendizado](docs/trail.md) — as 6 fases
 - [Setup](docs/setup.md) — dev local + produção
+- [SMTP / e-mail](docs/smtp-setup.md) — testar e-mail local com Mailpit + provedores de produção
 
 </details>
 
@@ -121,6 +122,7 @@ Full instructions: [docs/setup.md](docs/setup.md)
 - [API reference](docs/api.md)
 - [Learning trail](docs/trail.md) — the 6 phases
 - [Setup](docs/setup.md) — local dev + production
+- [SMTP / email](docs/smtp-setup.md) — test email locally with Mailpit + production providers
 
 </details>
 

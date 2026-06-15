@@ -34,6 +34,25 @@ _PASSWORD_RULES = re.compile(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$")
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
+def _issue_verification_token(db: Session, user: User) -> str:
+    """Create a 24h email-verification token for ``user`` and return its URL.
+
+    Caller is responsible for committing the session.
+    """
+    token_value = secrets.token_urlsafe(48)
+    now = datetime.now(timezone.utc)
+    db.add(
+        EmailVerificationToken(
+            user_id=user.id,
+            token=token_value,
+            expires_at=now + timedelta(hours=24),
+            used=False,
+            created_at=now,
+        )
+    )
+    return f"{settings.FRONTEND_URL}/verify-email?token={token_value}"
+
+
 # Same opaque response whether the email is new or already taken, so the
 # endpoint can't be used to enumerate which addresses have accounts.
 _REGISTER_RESPONSE = {
@@ -57,15 +76,28 @@ def register(request: Request, payload: UserCreate, db: Session = Depends(get_db
 
     existing = db.scalar(select(User).where(User.email == payload.email))
     if existing:
-        # Don't reveal that the account exists. Instead, tell the real owner
-        # (via their inbox) that someone tried to register, and return the same
-        # generic response to the client.
-        login_url = f"{settings.FRONTEND_URL}/login"
-        reset_url = f"{settings.FRONTEND_URL}/forgot-password"
-        try:
-            send_existing_account_email(existing.email, login_url, reset_url)
-        except Exception:
-            pass  # logged inside; never surface to the client
+        # Don't reveal that the account exists. The right email to send depends
+        # on whether the real owner can actually use the account; the client
+        # always gets the same generic response either way.
+        if existing.is_verified:
+            # Usable account — point the owner to login / password reset.
+            login_url = f"{settings.FRONTEND_URL}/login"
+            reset_url = f"{settings.FRONTEND_URL}/forgot-password"
+            try:
+                send_existing_account_email(existing.email, login_url, reset_url)
+            except Exception:
+                pass  # logged inside; never surface to the client
+        else:
+            # Account exists but was never confirmed. Telling the owner to "log
+            # in" is a dead end (login 403s on unverified accounts), so resend a
+            # fresh verification link instead. Password is left untouched to
+            # avoid a re-registration account-takeover vector.
+            verify_url = _issue_verification_token(db, existing)
+            db.commit()
+            try:
+                send_verification_email(existing.email, verify_url)
+            except Exception:
+                pass  # logged inside; never surface to the client
         return _REGISTER_RESPONSE
 
     user = User(
@@ -76,20 +108,9 @@ def register(request: Request, payload: UserCreate, db: Session = Depends(get_db
     db.add(user)
     db.flush()  # assign user.id before issuing the token
 
-    token_value = secrets.token_urlsafe(48)
-    now = datetime.now(timezone.utc)
-    db.add(
-        EmailVerificationToken(
-            user_id=user.id,
-            token=token_value,
-            expires_at=now + timedelta(hours=24),
-            used=False,
-            created_at=now,
-        )
-    )
+    verify_url = _issue_verification_token(db, user)
     db.commit()
 
-    verify_url = f"{settings.FRONTEND_URL}/verify-email?token={token_value}"
     try:
         send_verification_email(user.email, verify_url)
     except Exception:

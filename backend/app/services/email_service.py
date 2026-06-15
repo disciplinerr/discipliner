@@ -189,8 +189,14 @@ def _send(to_email: str, subject: str, plain: str, html: str) -> None:
     try:
         with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=10) as smtp:
             smtp.ehlo()
-            smtp.starttls()
-            smtp.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
+            # Upgrade to TLS only if the server advertises it (Gmail does;
+            # local catchers like Mailpit usually don't).
+            if smtp.has_extn("STARTTLS"):
+                smtp.starttls()
+                smtp.ehlo()
+            # Authenticate only when credentials are configured.
+            if settings.SMTP_USER:
+                smtp.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
             smtp.sendmail(settings.SMTP_FROM, to_email, msg.as_string())
     except Exception:
         logger.exception("Failed to send email to %s", to_email)
