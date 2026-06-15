@@ -399,8 +399,9 @@ export const en: Record<keyof typeof ptBR, string> = {
   "finance.form.income_kind": "Income type",
 
   "finance.recommendation": "Recommended plan",
+  "finance.see_recommendation": "See plan",
   "finance.recommendation_help":
-    "A healthy split of your income following the 50/30/20 rule and classic personal-finance ceilings (housing ≤30%, etc).",
+    "Optional suggestion — a healthy split of your income following the 50/30/20 rule and classic personal-finance ceilings (housing ≤30%, etc). Use it as a reference, not a rule.",
   "finance.status.healthy": "Healthy: you can save well this month.",
   "finance.status.tight": "Tight: little left over, review your wants.",
   "finance.status.over": "In the red: spending exceeds income.",

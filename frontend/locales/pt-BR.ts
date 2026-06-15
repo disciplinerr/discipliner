@@ -397,8 +397,9 @@ export const ptBR = {
   "finance.form.income_kind": "Tipo de renda",
 
   "finance.recommendation": "Projeção recomendada",
+  "finance.see_recommendation": "Ver projeção",
   "finance.recommendation_help":
-    "Distribuição saudável da sua renda segundo a regra 50/30/20 e tetos clássicos de finanças pessoais (moradia ≤30%, etc).",
+    "Sugestão opcional — uma distribuição saudável da sua renda segundo a regra 50/30/20 e tetos clássicos de finanças pessoais (moradia ≤30%, etc). Use como referência, não como regra.",
   "finance.status.healthy": "Saudável: você consegue poupar bem este mês.",
   "finance.status.tight": "Apertado: sobra pouco, revise os desejos.",
   "finance.status.over": "No vermelho: gasto maior que a renda.",

@@ -11,6 +11,7 @@ import IncomeList from "@/components/finance/IncomeList";
 import CategoryBudgets from "@/components/finance/CategoryBudgets";
 import CategoryManagerModal from "@/components/finance/CategoryManagerModal";
 import InstallmentsList from "@/components/finance/InstallmentsList";
+import Modal from "@/components/finance/Modal";
 import MonthSelector from "@/components/finance/MonthSelector";
 import RuleBreakdown from "@/components/finance/RuleBreakdown";
 import SavingsGoals from "@/components/finance/SavingsGoals";
@@ -67,6 +68,7 @@ export default function FinancePage() {
   const [showInstallment, setShowInstallment] = useState(false);
   const [showGoal, setShowGoal] = useState(false);
   const [showIncome, setShowIncome] = useState(false);
+  const [showRecommendation, setShowRecommendation] = useState(false);
 
   const load = useCallback(() => {
     getFinanceOverview(year, month).then(setOverview).catch(() => {});
@@ -129,16 +131,21 @@ export default function FinancePage() {
             <Card
               title={t("finance.rule_503020")}
               action={
-                <button type="button" className={SMALL_BTN} onClick={() => setShowCats(true)}>
-                  {t("finance.manage_categories")}
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    className={SMALL_BTN}
+                    onClick={() => setShowRecommendation(true)}
+                  >
+                    {t("finance.see_recommendation")}
+                  </button>
+                  <button type="button" className={SMALL_BTN} onClick={() => setShowCats(true)}>
+                    {t("finance.manage_categories")}
+                  </button>
+                </div>
               }
             >
               <RuleBreakdown groups={overview.groups} income={overview.total_income} />
-            </Card>
-
-            <Card title={t("finance.recommendation")}>
-              <SpendingRecommendation data={overview.recommendation} />
             </Card>
 
             <Card title={t("finance.budgets")}>
@@ -259,6 +266,14 @@ export default function FinancePage() {
       )}
       {showIncome && (
         <AddIncomeModal onClose={() => setShowIncome(false)} onSaved={load} />
+      )}
+      {showRecommendation && overview && (
+        <Modal
+          title={t("finance.recommendation")}
+          onClose={() => setShowRecommendation(false)}
+        >
+          <SpendingRecommendation data={overview.recommendation} />
+        </Modal>
       )}
     </RequireAuth>
   );
