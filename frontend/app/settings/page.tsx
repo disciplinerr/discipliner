@@ -14,6 +14,7 @@ import {
   setPomodoroConfig,
 } from "@/lib/pomodoro";
 import { User } from "@/types";
+import { Check } from "lucide-react";
 
 const LOCALES: { value: Locale; label: string }[] = [
   { value: "pt-BR", label: "Português (BR)" },
@@ -76,8 +77,8 @@ export default function SettingsPage() {
           title={t("settings.pomodoro")}
           action={
             saved && (
-              <span className="text-xs font-bold text-secondary">
-                {t("settings.saved")} ✓
+              <span className="inline-flex items-center gap-1 text-xs font-bold text-secondary">
+                {t("settings.saved")} <Check size={12} />
               </span>
             )
           }

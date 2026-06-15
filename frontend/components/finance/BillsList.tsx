@@ -5,6 +5,7 @@ import { BillStatus } from "@/types";
 import { useI18n } from "@/lib/i18n";
 import { formatMoney } from "@/lib/finance";
 import { deleteBill, payBill, unpayBill } from "@/lib/api";
+import { X } from "lucide-react";
 
 interface Props {
   bills: BillStatus[];
@@ -88,9 +89,9 @@ export default function BillsList({ bills, year, month, onChanged }: Props) {
               disabled={busy === b.id}
               onClick={() => remove(b.id)}
               aria-label={t("finance.form.delete")}
-              className="rounded-lg px-2 py-1 text-[11px] font-bold text-muted transition-colors hover:text-rose-400 disabled:opacity-40"
+              className="rounded-lg px-2 py-1 text-muted transition-colors hover:text-rose-400 disabled:opacity-40"
             >
-              ✕
+              <X size={14} />
             </button>
           </div>
         </li>

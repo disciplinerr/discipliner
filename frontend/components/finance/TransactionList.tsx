@@ -5,6 +5,8 @@ import { Category, Transaction } from "@/types";
 import { useI18n } from "@/lib/i18n";
 import { formatMoney } from "@/lib/finance";
 import { deleteTransaction } from "@/lib/api";
+import AppIcon from "@/lib/icons";
+import { X } from "lucide-react";
 
 interface Props {
   transactions: Transaction[];
@@ -46,7 +48,11 @@ export default function TransactionList({ transactions, categories, onChanged }:
         return (
           <li key={tx.id} className="flex items-center justify-between gap-3 py-3">
             <div className="flex min-w-0 items-center gap-3">
-              <span className="text-lg">{cat?.emoji ?? (income ? "💵" : "💸")}</span>
+              <AppIcon
+                name={cat?.emoji ?? (income ? "money" : "tag")}
+                size={20}
+                color={cat?.color ?? (income ? "#34d399" : undefined)}
+              />
               <div className="min-w-0">
                 <p className="truncate font-semibold">{tx.description}</p>
                 <p className="text-xs text-muted">
@@ -66,9 +72,9 @@ export default function TransactionList({ transactions, categories, onChanged }:
                 disabled={busy === tx.id}
                 onClick={() => remove(tx.id)}
                 aria-label={t("finance.form.delete")}
-                className="rounded-lg px-2 py-1 text-[11px] font-bold text-muted transition-colors hover:text-rose-400 disabled:opacity-40"
+                className="rounded-lg px-2 py-1 text-muted transition-colors hover:text-rose-400 disabled:opacity-40"
               >
-                ✕
+                <X size={14} />
               </button>
             </div>
           </li>

@@ -323,7 +323,7 @@ class ExpenseCategory(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
     category_key: Mapped[str] = mapped_column(String(64), nullable=False)
     name: Mapped[str] = mapped_column(String(120), nullable=False)
-    emoji: Mapped[str] = mapped_column(String(8), default="💸")
+    emoji: Mapped[str] = mapped_column(String(32), default="tag")  # app icon key
     color: Mapped[str] = mapped_column(String(9), default="#a3a3a3")
     group: Mapped[BudgetGroup] = mapped_column(Enum(BudgetGroup), default=BudgetGroup.NEEDS)
     monthly_budget: Mapped[float] = mapped_column(Float, default=0.0)
@@ -449,7 +449,7 @@ class SavingsGoal(Base):
     name: Mapped[str] = mapped_column(String(120), nullable=False)
     target_amount: Mapped[float] = mapped_column(Float, nullable=False)
     current_amount: Mapped[float] = mapped_column(Float, default=0.0)
-    emoji: Mapped[str] = mapped_column(String(8), default="🎯")
+    emoji: Mapped[str] = mapped_column(String(32), default="target")  # app icon key
     color: Mapped[str] = mapped_column(String(9), default="#4ade80")
     deadline: Mapped[date | None] = mapped_column(Date, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)

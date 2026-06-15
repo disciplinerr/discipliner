@@ -7,6 +7,7 @@ import Input from "@/components/ui/Input";
 import Logo from "@/components/ui/Logo";
 import { ApiError, forgotPassword } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
+import { ArrowLeft } from "lucide-react";
 
 export default function ForgotPasswordPage() {
   const { t } = useI18n();
@@ -44,9 +45,9 @@ export default function ForgotPasswordPage() {
             <p className="text-sm text-secondary">{t("auth.forgot_sent_text")}</p>
             <Link
               href="/login"
-              className="inline-block mt-2 text-sm font-semibold text-foreground underline-offset-4 hover:underline"
+              className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-foreground underline-offset-4 hover:underline"
             >
-              ← {t("auth.back_to_login")}
+              <ArrowLeft size={14} /> {t("auth.back_to_login")}
             </Link>
           </div>
         ) : (
@@ -71,9 +72,9 @@ export default function ForgotPasswordPage() {
             <p className="mt-5 text-center text-sm text-muted">
               <Link
                 href="/login"
-                className="font-semibold text-foreground underline-offset-4 hover:underline"
+                className="inline-flex items-center gap-1 font-semibold text-foreground underline-offset-4 hover:underline"
               >
-                ← {t("auth.back_to_login")}
+                <ArrowLeft size={14} /> {t("auth.back_to_login")}
               </Link>
             </p>
           </>

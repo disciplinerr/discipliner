@@ -350,6 +350,7 @@ export const en: Record<keyof typeof ptBR, string> = {
   "finance.form.group": "Group (50/30/20)",
   "finance.form.monthly_budget": "Monthly budget",
   "finance.form.emoji": "Emoji",
+  "finance.form.icon": "Icon",
   "finance.form.save": "Save",
   "finance.form.cancel": "Cancel",
   "finance.form.delete": "Delete",

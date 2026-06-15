@@ -27,20 +27,21 @@ from app.models import (
     User,
 )
 
-# key -> (name, emoji, color, group)
+# key -> (name, icon, color, group). `icon` is an app icon key (see frontend
+# lib/icons.tsx), not an OS emoji, so it renders identically on every platform.
 DEFAULT_CATEGORIES: dict[str, tuple[str, str, str, BudgetGroup]] = {
-    "study": ("Educação", "🎓", "#fbbf24", BudgetGroup.NEEDS),
-    "housing": ("Moradia", "🏠", "#60a5fa", BudgetGroup.NEEDS),
-    "groceries": ("Mercado", "🛒", "#34d399", BudgetGroup.NEEDS),
-    "transport": ("Transporte", "🚌", "#fbbf24", BudgetGroup.NEEDS),
-    "utilities": ("Contas de casa", "💡", "#f87171", BudgetGroup.NEEDS),
-    "health": ("Saúde", "🩺", "#f472b6", BudgetGroup.NEEDS),
-    "dining": ("Restaurantes", "🍽️", "#fb923c", BudgetGroup.WANTS),
-    "leisure": ("Lazer", "🎮", "#a78bfa", BudgetGroup.WANTS),
-    "shopping": ("Compras", "🛍️", "#e879f9", BudgetGroup.WANTS),
-    "subscriptions": ("Assinaturas", "📺", "#22d3ee", BudgetGroup.WANTS),
-    "savings": ("Reserva / Investimento", "💰", "#4ade80", BudgetGroup.SAVINGS),
-    "debt": ("Dívidas", "💳", "#fca5a5", BudgetGroup.SAVINGS),
+    "study": ("Educação", "education", "#fbbf24", BudgetGroup.NEEDS),
+    "housing": ("Moradia", "housing", "#60a5fa", BudgetGroup.NEEDS),
+    "groceries": ("Mercado", "groceries", "#34d399", BudgetGroup.NEEDS),
+    "transport": ("Transporte", "transport", "#fbbf24", BudgetGroup.NEEDS),
+    "utilities": ("Contas de casa", "utilities", "#f87171", BudgetGroup.NEEDS),
+    "health": ("Saúde", "health", "#f472b6", BudgetGroup.NEEDS),
+    "dining": ("Restaurantes", "dining", "#fb923c", BudgetGroup.WANTS),
+    "leisure": ("Lazer", "leisure", "#a78bfa", BudgetGroup.WANTS),
+    "shopping": ("Compras", "shopping", "#e879f9", BudgetGroup.WANTS),
+    "subscriptions": ("Assinaturas", "subscriptions", "#22d3ee", BudgetGroup.WANTS),
+    "savings": ("Reserva / Investimento", "savings", "#4ade80", BudgetGroup.SAVINGS),
+    "debt": ("Dívidas", "debt", "#fca5a5", BudgetGroup.SAVINGS),
 }
 
 GROUP_TARGETS: dict[BudgetGroup, int] = {

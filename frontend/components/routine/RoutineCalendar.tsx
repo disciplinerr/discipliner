@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { getMonthRoutine } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { RoutineMonth } from "@/types";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const WEEKDAYS_PT = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
 const WEEKDAYS_EN = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -73,18 +74,20 @@ export default function RoutineCalendar() {
         <button
           type="button"
           onClick={prev}
-          className="rounded-lg px-3 py-1 text-xs font-bold text-muted transition-colors hover:text-foreground"
+          className="rounded-lg p-1.5 text-muted transition-colors hover:text-foreground"
+          aria-label="previous month"
         >
-          ←
+          <ChevronLeft size={16} />
         </button>
         <span className="text-sm font-bold capitalize text-secondary">{monthName}</span>
         <button
           type="button"
           onClick={next}
           disabled={isAtMax}
-          className="rounded-lg px-3 py-1 text-xs font-bold text-muted transition-colors hover:text-foreground disabled:opacity-30"
+          className="rounded-lg p-1.5 text-muted transition-colors hover:text-foreground disabled:opacity-30"
+          aria-label="next month"
         >
-          →
+          <ChevronRight size={16} />
         </button>
       </div>
 

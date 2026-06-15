@@ -6,6 +6,7 @@ import RequireAuth from "@/components/ui/RequireAuth";
 import { getDueReviews, getReviewStats, gradeReview } from "@/lib/api";
 import { TKey, useI18n } from "@/lib/i18n";
 import { ReviewCard, ReviewStats } from "@/types";
+import { Check } from "lucide-react";
 
 const GRADES: { value: 0 | 1 | 2 | 3; label: TKey; hint: TKey }[] = [
   { value: 0, label: "review.grade0", hint: "review.grade0_hint" },
@@ -134,8 +135,8 @@ export default function ReviewPage() {
         ) : (
           <Card>
             <div className="flex min-h-[200px] flex-col items-center justify-center gap-3 text-center">
-              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-foreground text-xl text-background">
-                ✓
+              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-foreground text-background">
+                <Check size={22} />
               </span>
               <p className="font-extrabold">{t("review.done_title")}</p>
               <p className="max-w-sm text-sm text-secondary">{t("review.done_text")}</p>

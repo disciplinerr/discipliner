@@ -279,7 +279,7 @@ class CategoryOut(BaseModel):
 
 class CategoryCreate(BaseModel):
     name: str = Field(min_length=1, max_length=120)
-    emoji: str = Field(default="💸", max_length=8)
+    emoji: str = Field(default="tag", max_length=32)  # app icon key
     color: str = Field(default="#a3a3a3", max_length=9)
     group: str = Field(default="NEEDS", pattern="^(NEEDS|WANTS|SAVINGS)$")
     monthly_budget: float = Field(default=0.0, ge=0)
@@ -287,7 +287,7 @@ class CategoryCreate(BaseModel):
 
 class CategoryUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=120)
-    emoji: str | None = Field(default=None, max_length=8)
+    emoji: str | None = Field(default=None, max_length=32)
     color: str | None = Field(default=None, max_length=9)
     group: str | None = Field(default=None, pattern="^(NEEDS|WANTS|SAVINGS)$")
     monthly_budget: float | None = Field(default=None, ge=0)
@@ -516,7 +516,7 @@ class SavingsGoalCreate(BaseModel):
     name: str = Field(min_length=1, max_length=120)
     target_amount: float = Field(gt=0)
     current_amount: float = Field(default=0.0, ge=0)
-    emoji: str = Field(default="🎯", max_length=8)
+    emoji: str = Field(default="target", max_length=32)  # app icon key
     color: str = Field(default="#4ade80", max_length=9)
     deadline: date | None = None
 
@@ -525,7 +525,7 @@ class SavingsGoalUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=120)
     target_amount: float | None = Field(default=None, gt=0)
     current_amount: float | None = Field(default=None, ge=0)
-    emoji: str | None = Field(default=None, max_length=8)
+    emoji: str | None = Field(default=None, max_length=32)
     color: str | None = Field(default=None, max_length=9)
     deadline: date | None = None
     is_active: bool | None = None

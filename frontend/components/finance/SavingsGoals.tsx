@@ -5,6 +5,8 @@ import { SavingsGoal } from "@/types";
 import { useI18n } from "@/lib/i18n";
 import { formatMoney, pct } from "@/lib/finance";
 import { contributeGoal, deleteGoal } from "@/lib/api";
+import AppIcon from "@/lib/icons";
+import { X } from "lucide-react";
 
 interface Props {
   goals: SavingsGoal[];
@@ -52,8 +54,8 @@ export default function SavingsGoals({ goals, onChanged }: Props) {
         return (
           <div key={g.id} className="rounded-xl border border-line bg-surface p-4">
             <div className="mb-1 flex items-baseline justify-between text-sm">
-              <span className="font-semibold">
-                <span className="mr-1.5">{g.emoji}</span>
+              <span className="flex items-center gap-1.5 font-semibold">
+                <AppIcon name={g.emoji} size={16} color={done ? "#4ade80" : g.color} />
                 {g.name}
                 {done && (
                   <span className="ml-2 text-xs font-bold text-emerald-400">
@@ -96,9 +98,9 @@ export default function SavingsGoals({ goals, onChanged }: Props) {
                 disabled={busy === g.id}
                 onClick={() => remove(g.id)}
                 aria-label={t("finance.form.delete")}
-                className="ml-auto rounded-lg px-2 py-1.5 text-[11px] font-bold text-muted transition-colors hover:text-rose-400 disabled:opacity-40"
+                className="ml-auto rounded-lg px-2 py-1.5 text-muted transition-colors hover:text-rose-400 disabled:opacity-40"
               >
-                ✕
+                <X size={14} />
               </button>
             </div>
           </div>

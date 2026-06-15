@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { useI18n } from "@/lib/i18n";
 import { createGoal } from "@/lib/api";
+import { IconKey } from "@/lib/icons";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
+import IconPicker from "./IconPicker";
 import Modal from "./Modal";
 
 interface Props {
@@ -19,7 +21,7 @@ export default function AddGoalModal({ onClose, onSaved }: Props) {
   const [name, setName] = useState("");
   const [target, setTarget] = useState("");
   const [current, setCurrent] = useState("");
-  const [emoji, setEmoji] = useState("🎯");
+  const [icon, setIcon] = useState<IconKey>("target");
   const [deadline, setDeadline] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -34,7 +36,7 @@ export default function AddGoalModal({ onClose, onSaved }: Props) {
         name: name.trim(),
         target_amount: targetValue,
         current_amount: currentValue >= 0 ? currentValue : 0,
-        emoji: emoji.trim() || "🎯",
+        emoji: icon,
         color: "#4ade80",
         deadline: deadline || null,
       });
@@ -50,8 +52,8 @@ export default function AddGoalModal({ onClose, onSaved }: Props) {
       <form onSubmit={submit} className="space-y-4">
         <div className="grid grid-cols-[4rem_1fr] gap-3">
           <div>
-            <label className={fieldLabel}>{t("finance.form.emoji")}</label>
-            <Input value={emoji} onChange={(e) => setEmoji(e.target.value)} maxLength={4} />
+            <label className={fieldLabel}>{t("finance.form.icon")}</label>
+            <IconPicker value={icon} onChange={setIcon} color="#4ade80" />
           </div>
           <div>
             <label className={fieldLabel}>{t("finance.form.name")}</label>

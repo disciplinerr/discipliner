@@ -5,6 +5,7 @@ import Button from "@/components/ui/Button";
 import { ApiError, completePhase } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { PhaseProgress } from "@/types";
+import { Check } from "lucide-react";
 
 export default function PhaseCard({
   progress,
@@ -66,7 +67,7 @@ export default function PhaseCard({
               : "border border-line bg-surface text-muted"
         }`}
       >
-        {done ? "✓" : phase.number}
+        {done ? <Check size={16} /> : phase.number}
       </span>
 
       <div

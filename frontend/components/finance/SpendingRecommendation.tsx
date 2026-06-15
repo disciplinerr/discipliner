@@ -3,6 +3,7 @@
 import { Recommendation } from "@/types";
 import { TKey as I18nKey, useI18n } from "@/lib/i18n";
 import { formatMoney } from "@/lib/finance";
+import AppIcon from "@/lib/icons";
 
 const STATUS_STYLE: Record<string, string> = {
   healthy: "border-emerald-500/40 bg-emerald-500/5 text-emerald-400",
@@ -11,15 +12,16 @@ const STATUS_STYLE: Record<string, string> = {
   unknown: "border-line bg-elevated/40 text-muted",
 };
 
-const GUIDELINE_EMOJI: Record<string, string> = {
-  housing: "🏠",
-  food: "🛒",
-  transport: "🚌",
-  leisure: "🎮",
-  shopping: "🛍️",
-  education: "🎓",
-  savings: "💰",
-  debt: "💳",
+// recommendation area key -> app icon key
+const GUIDELINE_ICON: Record<string, string> = {
+  housing: "housing",
+  food: "groceries",
+  transport: "transport",
+  leisure: "leisure",
+  shopping: "shopping",
+  education: "education",
+  savings: "savings",
+  debt: "debt",
 };
 
 export default function SpendingRecommendation({ data }: { data: Recommendation }) {
@@ -63,7 +65,7 @@ export default function SpendingRecommendation({ data }: { data: Recommendation 
             className="flex items-center justify-between gap-3 rounded-lg px-1 py-1 text-sm"
           >
             <span className="flex items-center gap-2 text-secondary">
-              <span>{GUIDELINE_EMOJI[it.key] ?? "•"}</span>
+              <AppIcon name={GUIDELINE_ICON[it.key] ?? "tag"} size={15} />
               {t(`finance.guideline.${it.key}` as I18nKey)}
               <span className="text-[11px] font-semibold text-muted">{it.pct}%</span>
             </span>

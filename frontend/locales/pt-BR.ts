@@ -348,6 +348,7 @@ export const ptBR = {
   "finance.form.group": "Grupo (50/30/20)",
   "finance.form.monthly_budget": "Orçamento mensal",
   "finance.form.emoji": "Emoji",
+  "finance.form.icon": "Ícone",
   "finance.form.save": "Salvar",
   "finance.form.cancel": "Cancelar",
   "finance.form.delete": "Excluir",

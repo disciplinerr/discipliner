@@ -3,6 +3,7 @@
 import { CategorySpend } from "@/types";
 import { useI18n } from "@/lib/i18n";
 import { formatMoney, pct } from "@/lib/finance";
+import AppIcon from "@/lib/icons";
 
 export default function CategoryBudgets({ categories }: { categories: CategorySpend[] }) {
   const { t, locale } = useI18n();
@@ -22,8 +23,8 @@ export default function CategoryBudgets({ categories }: { categories: CategorySp
         return (
           <div key={c.category_id}>
             <div className="mb-1 flex items-baseline justify-between text-sm">
-              <span className="font-semibold">
-                <span className="mr-1.5">{c.emoji}</span>
+              <span className="flex items-center gap-1.5 font-semibold">
+                <AppIcon name={c.emoji} size={16} color={c.color} />
                 {c.name}
               </span>
               <span className={over ? "font-bold text-rose-400" : "text-secondary"}>

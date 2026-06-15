@@ -153,7 +153,7 @@ export default function AddInstallmentModal({
               .filter((c) => c.is_active)
               .map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.emoji} {c.name}
+                  {c.name}
                 </option>
               ))}
           </select>

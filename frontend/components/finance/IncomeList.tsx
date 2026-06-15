@@ -5,6 +5,7 @@ import { RecurringIncome } from "@/types";
 import { TKey as I18nKey, useI18n } from "@/lib/i18n";
 import { formatMoney } from "@/lib/finance";
 import { deleteIncome } from "@/lib/api";
+import { X } from "lucide-react";
 
 interface Props {
   incomes: RecurringIncome[];
@@ -61,9 +62,9 @@ export default function IncomeList({ incomes, onChanged }: Props) {
               disabled={busy === i.id}
               onClick={() => remove(i.id)}
               aria-label={t("finance.form.delete")}
-              className="rounded-lg px-2 py-1 text-[11px] font-bold text-muted transition-colors hover:text-rose-400 disabled:opacity-40"
+              className="rounded-lg px-2 py-1 text-muted transition-colors hover:text-rose-400 disabled:opacity-40"
             >
-              ✕
+              <X size={14} />
             </button>
           </div>
         </li>
