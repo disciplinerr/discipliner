@@ -11,14 +11,17 @@ import RequireAuth from "@/components/ui/RequireAuth";
 import {
   getChallengeHistory,
   getDashboardStats,
+  getFinanceOverview,
   getReviewStats,
   getTodayRoutine,
   getTrailProgress,
 } from "@/lib/api";
+import { formatMoney } from "@/lib/finance";
 import { routineLabel, useI18n } from "@/lib/i18n";
 import {
   ChallengeHistoryItem,
   DashboardStats,
+  FinanceOverview,
   ReviewStats,
   RoutineDay,
   TrailProgress,
@@ -38,13 +41,18 @@ export default function DashboardPage() {
   const [trail, setTrail] = useState<TrailProgress | null>(null);
   const [reviews, setReviews] = useState<ReviewStats | null>(null);
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [finance, setFinance] = useState<FinanceOverview | null>(null);
 
   useEffect(() => {
+    const now = new Date();
     getTodayRoutine().then(setRoutine).catch(() => {});
     getChallengeHistory().then(setHistory).catch(() => {});
     getTrailProgress().then(setTrail).catch(() => {});
     getReviewStats().then(setReviews).catch(() => {});
     getDashboardStats().then(setStats).catch(() => {});
+    getFinanceOverview(now.getFullYear(), now.getMonth() + 1)
+      .then(setFinance)
+      .catch(() => {});
   }, []);
 
   const routineDone = routine
@@ -140,6 +148,35 @@ export default function DashboardPage() {
               <p className="mt-3 text-sm text-secondary">
                 {todayItem ? todayItem.challenge.title : t("dashboard.open_today")}
               </p>
+            </Card>
+          </Link>
+
+          <Link href="/finance" className="group">
+            <Card className="h-full transition-colors group-hover:border-muted">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted">
+                {t("dashboard.finance")}
+              </p>
+              <p className="mt-3 text-3xl font-extrabold text-rose-400">
+                {finance ? formatMoney(finance.total_spending, locale) : "—"}
+              </p>
+              <p className="mb-3 mt-1 text-sm text-secondary">
+                {finance
+                  ? `${t("dashboard.of_income")} ${formatMoney(finance.total_income, locale)}`
+                  : t("dashboard.finance_sub")}
+              </p>
+              <ProgressBar
+                value={finance?.total_spending ?? 0}
+                total={finance?.total_income ?? 0}
+              />
+              {finance && (
+                <p
+                  className={`mt-3 text-sm font-bold ${
+                    finance.net >= 0 ? "text-emerald-400" : "text-rose-400"
+                  }`}
+                >
+                  {t("dashboard.leftover")} {formatMoney(finance.net, locale)}
+                </p>
+              )}
             </Card>
           </Link>
 
