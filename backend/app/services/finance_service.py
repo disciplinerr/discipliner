@@ -218,7 +218,15 @@ def installments_outstanding(db: Session, user_id: int) -> float:
 
 
 def trend_for_months(db: Session, user_id: int, year: int, month: int, months: int) -> list[dict]:
-    """Income/expense/balance for the `months` months ending at (year, month)."""
+    """Holistic income/expense/balance for the `months` months ending at (year, month).
+
+    Mirrors the overview totals so the chart matches the summary cards:
+    income  = recurring income (salário + VR/VT) + one-off INCOME transactions;
+    expense = one-off EXPENSE transactions + fixed bills + installment charges.
+    Recurring income is a fixed monthly figure, so it's applied to every month."""
+    recurring_income = sum(
+        ri.amount for ri in get_recurring_incomes(db, user_id) if ri.is_active
+    )
     points: list[dict] = []
     for i in range(months - 1, -1, -1):
         y, m = _add_months(year, month, -i)
@@ -230,8 +238,18 @@ def trend_for_months(db: Session, user_id: int, year: int, month: int, months: i
                 Transaction.date <= last,
             )
         ).all()
-        income = sum(t.amount for t in txns if t.kind == TransactionKind.INCOME)
-        expense = sum(t.amount for t in txns if t.kind == TransactionKind.EXPENSE)
+        income = recurring_income + sum(
+            t.amount for t in txns if t.kind == TransactionKind.INCOME
+        )
+        bills = sum(b["amount"] for b in bills_for_month(db, user_id, y, m))
+        installments = sum(
+            r["installment_amount"] for r in installments_for_month(db, user_id, y, m)
+        )
+        expense = (
+            sum(t.amount for t in txns if t.kind == TransactionKind.EXPENSE)
+            + bills
+            + installments
+        )
         points.append(
             {
                 "year": y,

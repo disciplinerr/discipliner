@@ -72,6 +72,7 @@ export const en: Record<keyof typeof ptBR, string> = {
   "dashboard.of_income": "of",
   "dashboard.finance_sub": "income vs spending",
   "dashboard.leftover": "Leftover:",
+  "dashboard.see_details": "see details →",
   "dashboard.not_attempted": "not attempted",
   "dashboard.not_generated": "not generated",
   "dashboard.open_today": "open today's challenge",

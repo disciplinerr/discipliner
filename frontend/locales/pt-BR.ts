@@ -70,6 +70,7 @@ export const ptBR = {
   "dashboard.of_income": "de",
   "dashboard.finance_sub": "renda x despesas",
   "dashboard.leftover": "Sobra:",
+  "dashboard.see_details": "ver detalhes →",
   "dashboard.not_attempted": "não tentado",
   "dashboard.not_generated": "não gerado",
   "dashboard.open_today": "abrir desafio de hoje",
