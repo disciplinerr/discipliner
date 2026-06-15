@@ -85,10 +85,25 @@ async function request<T>(
 
 // --- Auth ---
 
-export function register(email: string, password: string): Promise<User> {
+export function register(
+  email: string,
+  password: string,
+  passwordConfirm: string,
+): Promise<{ message: string }> {
   return request("/api/v1/auth/register", {
     method: "POST",
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({
+      email,
+      password,
+      password_confirm: passwordConfirm,
+    }),
+  });
+}
+
+export function verifyEmail(token: string): Promise<{ message: string }> {
+  return request("/api/v1/auth/verify-email", {
+    method: "POST",
+    body: JSON.stringify({ token }),
   });
 }
 
