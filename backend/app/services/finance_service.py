@@ -20,6 +20,7 @@ from app.models import (
     ExpenseCategory,
     Installment,
     RecurringBill,
+    RecurringIncome,
     SavingsGoal,
     Transaction,
     TransactionKind,
@@ -243,6 +244,16 @@ def trend_for_months(db: Session, user_id: int, year: int, month: int, months: i
     return points
 
 
+def get_recurring_incomes(db: Session, user_id: int) -> list[RecurringIncome]:
+    return list(
+        db.scalars(
+            select(RecurringIncome)
+            .where(RecurringIncome.user_id == user_id)
+            .order_by(RecurringIncome.created_at)
+        ).all()
+    )
+
+
 def get_savings_goals(db: Session, user_id: int) -> list[SavingsGoal]:
     return list(
         db.scalars(
@@ -269,7 +280,6 @@ def build_overview(db: Session, user_id: int, year: int, month: int) -> dict:
     income = sum(t.amount for t in txns if t.kind == TransactionKind.INCOME)
     expense = sum(t.amount for t in txns if t.kind == TransactionKind.EXPENSE)
     balance = income - expense
-    savings_rate = (balance / income) if income > 0 else 0.0
 
     categories = get_categories(db, user_id, active_only=True)
     cat_by_id = {c.id: c for c in categories}
@@ -320,6 +330,17 @@ def build_overview(db: Session, user_id: int, year: int, month: int) -> dict:
     installments_month = sum(i["installment_amount"] for i in installments)
     installments_outstanding_total = sum(i["remaining_amount"] for i in installments)
 
+    # Holistic monthly picture: recurring income (salário + VR/VT) plus any
+    # one-off income, against everything owed this month — loose transactions,
+    # fixed bills and installment charges.
+    recurring_income = sum(
+        ri.amount for ri in get_recurring_incomes(db, user_id) if ri.is_active
+    )
+    total_income = recurring_income + income
+    total_spending = expense + bills_total + installments_month
+    net = total_income - total_spending
+    savings_rate = (net / total_income) if total_income > 0 else 0.0
+
     return {
         "year": year,
         "month": month,
@@ -327,6 +348,10 @@ def build_overview(db: Session, user_id: int, year: int, month: int) -> dict:
         "expense": expense,
         "balance": balance,
         "savings_rate": savings_rate,
+        "recurring_income": recurring_income,
+        "total_income": total_income,
+        "total_spending": total_spending,
+        "net": net,
         "total_budget": sum(c.monthly_budget for c in categories),
         "bills_total": bills_total,
         "bills_paid": bills_paid,

@@ -173,6 +173,15 @@ export interface DashboardStats {
 
 export type BudgetGroup = "NEEDS" | "WANTS" | "SAVINGS";
 export type TransactionKind = "EXPENSE" | "INCOME";
+export type IncomeKind = "SALARY" | "BENEFIT" | "OTHER";
+
+export interface RecurringIncome {
+  id: number;
+  name: string;
+  amount: number;
+  kind: IncomeKind;
+  is_active: boolean;
+}
 
 export interface Category {
   id: number;
@@ -243,6 +252,10 @@ export interface FinanceOverview {
   expense: number;
   balance: number;
   savings_rate: number;
+  recurring_income: number;
+  total_income: number;
+  total_spending: number;
+  net: number;
   total_budget: number;
   bills_total: number;
   bills_paid: number;

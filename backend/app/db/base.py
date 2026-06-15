@@ -9,6 +9,7 @@ from app.models import (  # noqa: F401
     FallbackChallenge,
     Installment,
     RecurringBill,
+    RecurringIncome,
     ReviewCard,
     RoutineLog,
     SavingsGoal,

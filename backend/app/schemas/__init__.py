@@ -375,10 +375,14 @@ class GroupSpendOut(BaseModel):
 class FinanceOverviewOut(BaseModel):
     year: int
     month: int
-    income: float
-    expense: float
-    balance: float
-    savings_rate: float
+    income: float                    # one-off INCOME transactions this month
+    expense: float                   # one-off EXPENSE transactions (lançamentos)
+    balance: float                   # income - expense (transaction-only)
+    savings_rate: float              # net / total_income
+    recurring_income: float          # sum of active recurring income (salário + VR/VT)
+    total_income: float              # recurring_income + income
+    total_spending: float            # expense + bills_total + installments_month
+    net: float                       # total_income - total_spending
     total_budget: float
     bills_total: float
     bills_paid: float
@@ -389,6 +393,31 @@ class FinanceOverviewOut(BaseModel):
     installments_outstanding: float  # total still owed from this month onward
     groups: list[GroupSpendOut]
     categories: list[CategorySpendOut]
+
+
+# --- Recurring income (renda fixa: salário + benefícios) ---
+
+class RecurringIncomeOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+    amount: float
+    kind: str
+    is_active: bool
+
+
+class RecurringIncomeCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+    amount: float = Field(gt=0)
+    kind: str = Field(default="SALARY", pattern="^(SALARY|BENEFIT|OTHER)$")
+
+
+class RecurringIncomeUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=120)
+    amount: float | None = Field(default=None, gt=0)
+    kind: str | None = Field(default=None, pattern="^(SALARY|BENEFIT|OTHER)$")
+    is_active: bool | None = None
 
 
 # --- Installments (parcelas) ---

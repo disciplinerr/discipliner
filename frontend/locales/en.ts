@@ -376,4 +376,16 @@ export const en: Record<keyof typeof ptBR, string> = {
   "finance.form.goal_target": "Target amount",
   "finance.form.goal_current": "Already saved",
   "finance.form.goal_deadline": "Deadline (optional)",
+
+  "finance.total_income": "Total income",
+  "finance.total_spending": "Total spending",
+  "finance.net": "Leftover",
+  "finance.incomes": "Fixed income (salary + benefits)",
+  "finance.add_income": "+ Income",
+  "finance.no_incomes": "No fixed income yet.",
+  "finance.new_income": "New fixed income",
+  "finance.income_kind.SALARY": "Salary",
+  "finance.income_kind.BENEFIT": "Benefit (meal/transport)",
+  "finance.income_kind.OTHER": "Other",
+  "finance.form.income_kind": "Income type",
 };

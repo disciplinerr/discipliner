@@ -374,4 +374,16 @@ export const ptBR = {
   "finance.form.goal_target": "Valor alvo",
   "finance.form.goal_current": "Já guardado",
   "finance.form.goal_deadline": "Prazo (opcional)",
+
+  "finance.total_income": "Renda total",
+  "finance.total_spending": "Gasto total",
+  "finance.net": "Sobra do mês",
+  "finance.incomes": "Renda fixa (salário + benefícios)",
+  "finance.add_income": "+ Renda",
+  "finance.no_incomes": "Nenhuma renda fixa cadastrada.",
+  "finance.new_income": "Nova renda fixa",
+  "finance.income_kind.SALARY": "Salário",
+  "finance.income_kind.BENEFIT": "Benefício (VR/VT)",
+  "finance.income_kind.OTHER": "Outra",
+  "finance.form.income_kind": "Tipo de renda",
 } as const;
