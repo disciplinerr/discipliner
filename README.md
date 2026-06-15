@@ -1,8 +1,6 @@
 <div align="center">
 
-<img src="frontend/app/icon.svg" width="88" alt="Discipliner logo" />
-
-# Discipliner
+<img src="assets/banner.svg" width="100%" alt="Discipliner — Sem atalhos. Disciplina diária." />
 
 **A personal discipline and study tracker. Not a friendly productivity app — a training ground.**
 
@@ -68,6 +66,7 @@ Instruções completas: [docs/setup.md](docs/setup.md)
 - [Trilha de aprendizado](docs/trail.md) — as 6 fases
 - [Setup](docs/setup.md) — dev local + produção
 - [SMTP / e-mail](docs/smtp-setup.md) — testar e-mail local com Mailpit + provedores de produção
+- [Versionamento & Releases](docs/releases.md) — SemVer, nivelamento de versão e fluxo de release por tag
 
 </details>
 
@@ -123,6 +122,7 @@ Full instructions: [docs/setup.md](docs/setup.md)
 - [Learning trail](docs/trail.md) — the 6 phases
 - [Setup](docs/setup.md) — local dev + production
 - [SMTP / email](docs/smtp-setup.md) — test email locally with Mailpit + production providers
+- [Versioning & Releases](docs/releases.md) — SemVer, version leveling, and tag-driven release flow
 
 </details>
 
