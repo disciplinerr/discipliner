@@ -6,22 +6,22 @@ import { formatMoney } from "@/lib/finance";
 
 export default function SummaryCards({ data }: { data: FinanceOverview }) {
   const { t, locale } = useI18n();
-  const positive = data.balance >= 0;
+  const positive = data.net >= 0;
 
   const cells = [
     {
-      label: t("finance.income"),
-      value: formatMoney(data.income, locale),
+      label: t("finance.total_income"),
+      value: formatMoney(data.total_income, locale),
       tone: "text-emerald-400",
     },
     {
-      label: t("finance.expense"),
-      value: formatMoney(data.expense, locale),
+      label: t("finance.total_spending"),
+      value: formatMoney(data.total_spending, locale),
       tone: "text-rose-400",
     },
     {
-      label: t("finance.balance"),
-      value: formatMoney(data.balance, locale),
+      label: t("finance.net"),
+      value: formatMoney(data.net, locale),
       tone: positive ? "text-foreground" : "text-rose-400",
     },
     {

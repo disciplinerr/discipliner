@@ -5,12 +5,43 @@ If SMTP_HOST is empty, the reset URL is logged to stdout (dev mode).
 
 import logging
 import smtplib
+from email import encoders
+from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
+
+# Brand mark (mirrors frontend components/ui/Logo.tsx). Embedded in every HTML
+# email as an inline CID attachment so the logo travels *with* the message
+# instead of relying on a hosted URL. The wordmark text stays as a fallback for
+# clients that don't render SVG.
+_LOGO_SVG = (
+    '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" '
+    'viewBox="0 0 512 512" role="img" aria-label="Discipliner">'
+    '<rect width="512" height="512" rx="120" fill="#0a0a0a"/>'
+    '<rect x="6" y="6" width="500" height="500" rx="116" fill="none" '
+    'stroke="#2e2e2e" stroke-width="12"/>'
+    '<path fill="#fafafa" fill-rule="evenodd" d="M154 136 h84 a120 120 0 0 1 0 '
+    '240 h-84 z M210 192 v128 h28 a64 64 0 0 0 0 -128 z"/>'
+    '<circle cx="358" cy="376" r="22" fill="#fafafa"/></svg>'
+)
+
+_LOGO_CID = "discipliner-logo"
+
+
+def _email_header() -> str:
+    """Shared HTML header: brand logo (CID image) above the wordmark."""
+    return (
+        '<tr><td style="padding:32px 40px 24px;border-bottom:1px solid #222;">'
+        f'<img src="cid:{_LOGO_CID}" width="40" height="40" alt="Discipliner" '
+        'style="display:block;border:0;outline:none;margin:0 0 12px;" />'
+        '<p style="margin:0;font-size:20px;font-weight:800;letter-spacing:-0.5px;'
+        'color:#fff;">discipliner</p>'
+        "</td></tr>"
+    )
 
 
 def _html_reset_email(reset_url: str) -> str:
@@ -28,13 +59,7 @@ def _html_reset_email(reset_url: str) -> str:
         <table width="480" cellpadding="0" cellspacing="0" style="background:#111;border:1px solid #222;border-radius:16px;overflow:hidden;">
 
           <!-- Header -->
-          <tr>
-            <td style="padding:32px 40px 24px;border-bottom:1px solid #222;">
-              <p style="margin:0;font-size:20px;font-weight:800;letter-spacing:-0.5px;color:#fff;">
-                discipliner
-              </p>
-            </td>
-          </tr>
+          {_email_header()}
 
           <!-- Body -->
           <tr>
@@ -109,9 +134,7 @@ def _html_verify_email(verify_url: str) -> str:
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:40px 0;">
     <tr><td align="center">
       <table width="480" cellpadding="0" cellspacing="0" style="background:#111;border:1px solid #222;border-radius:16px;overflow:hidden;">
-        <tr><td style="padding:32px 40px 24px;border-bottom:1px solid #222;">
-          <p style="margin:0;font-size:20px;font-weight:800;letter-spacing:-0.5px;color:#fff;">discipliner</p>
-        </td></tr>
+        {_email_header()}
         <tr><td style="padding:32px 40px;">
           <h1 style="margin:0 0 12px;font-size:22px;font-weight:800;letter-spacing:-0.3px;color:#fff;">Confirme seu e-mail</h1>
           <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#999;">
@@ -147,9 +170,7 @@ def _html_existing_account_email(login_url: str, reset_url: str) -> str:
 <body style="margin:0;padding:0;background:#0a0a0a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#e5e5e5;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:40px 0;"><tr><td align="center">
     <table width="480" cellpadding="0" cellspacing="0" style="background:#111;border:1px solid #222;border-radius:16px;overflow:hidden;">
-      <tr><td style="padding:32px 40px 24px;border-bottom:1px solid #222;">
-        <p style="margin:0;font-size:20px;font-weight:800;letter-spacing:-0.5px;color:#fff;">discipliner</p>
-      </td></tr>
+      {_email_header()}
       <tr><td style="padding:32px 40px;">
         <h1 style="margin:0 0 12px;font-size:22px;font-weight:800;letter-spacing:-0.3px;color:#fff;">Você já tem uma conta</h1>
         <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#999;">
@@ -179,12 +200,24 @@ def _send(to_email: str, subject: str, plain: str, html: str) -> None:
         logger.info("SMTP_HOST not set — dev mode. Email to %s:\n%s", to_email, plain)
         return
 
-    msg = MIMEMultipart("alternative")
+    # multipart/related wraps the alternative (plain+html) bodies together with
+    # the inline logo image the HTML references via cid:.
+    msg = MIMEMultipart("related")
     msg["Subject"] = subject
     msg["From"] = settings.SMTP_FROM
     msg["To"] = to_email
-    msg.attach(MIMEText(plain, "plain"))
-    msg.attach(MIMEText(html, "html"))
+
+    body = MIMEMultipart("alternative")
+    body.attach(MIMEText(plain, "plain"))
+    body.attach(MIMEText(html, "html"))
+    msg.attach(body)
+
+    logo = MIMEBase("image", "svg+xml")
+    logo.set_payload(_LOGO_SVG.encode("utf-8"))
+    encoders.encode_base64(logo)
+    logo.add_header("Content-ID", f"<{_LOGO_CID}>")
+    logo.add_header("Content-Disposition", "inline", filename="discipliner.svg")
+    msg.attach(logo)
 
     try:
         with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=10) as smtp:

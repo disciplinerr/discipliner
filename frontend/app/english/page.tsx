@@ -6,6 +6,7 @@ import RequireAuth from "@/components/ui/RequireAuth";
 import { getEnglishSession, getEnglishStats, submitEnglishAnswer } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { EnglishExercise, EnglishSession, EnglishStats } from "@/types";
+import { ArrowRight, Check, X } from "lucide-react";
 
 const TYPE_LABEL: Record<EnglishExercise["exercise_type"], string> = {
   multiple_choice_vocab: "english.type_multiple_choice",
@@ -120,8 +121,8 @@ export default function EnglishPage() {
         ) : sessionComplete ? (
           <Card>
             <div className="flex min-h-[200px] flex-col items-center justify-center gap-3 text-center">
-              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-foreground text-xl text-background">
-                ✓
+              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-foreground text-background">
+                <Check size={22} />
               </span>
               <p className="font-extrabold">{t("english.session_complete_title")}</p>
               <p className="max-w-sm text-sm text-secondary">
@@ -217,21 +218,23 @@ export default function EnglishPage() {
                 <div className="flex flex-col gap-3">
                   <div className="flex items-center gap-2">
                     <span
-                      className={`text-sm font-bold ${result.correct ? "text-green-500" : "text-red-500"}`}
+                      className={`inline-flex items-center gap-1 text-sm font-bold ${result.correct ? "text-green-500" : "text-red-500"}`}
                     >
-                      {result.correct ? "✓ Correto" : "✗ Incorreto"}
+                      {result.correct ? <Check size={15} /> : <X size={15} />}
+                      {result.correct ? "Correto" : "Incorreto"}
                     </span>
                     {!result.correct && (
-                      <span className="text-sm text-muted">
-                        → <span className="font-semibold text-foreground">{result.correct_answer}</span>
+                      <span className="inline-flex items-center gap-1 text-sm text-muted">
+                        <ArrowRight size={14} />
+                        <span className="font-semibold text-foreground">{result.correct_answer}</span>
                       </span>
                     )}
                   </div>
                   <button
                     onClick={next}
-                    className="self-start rounded-xl bg-foreground px-6 py-2.5 text-sm font-bold text-background transition-all hover:bg-neutral-300 active:scale-[0.98]"
+                    className="inline-flex items-center gap-1.5 self-start rounded-xl bg-foreground px-6 py-2.5 text-sm font-bold text-background transition-all hover:bg-neutral-300 active:scale-[0.98]"
                   >
-                    Próximo →
+                    Próximo <ArrowRight size={15} />
                   </button>
                 </div>
               )}

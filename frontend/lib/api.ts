@@ -13,6 +13,7 @@ import {
   Installment,
   InstallmentStatus,
   PreviewChallenge,
+  RecurringIncome,
   ReviewCard,
   ReviewStats,
   RoutineDay,
@@ -463,6 +464,27 @@ export function contributeGoal(id: number, amount: number): Promise<SavingsGoal>
 
 export function deleteGoal(id: number): Promise<void> {
   return request(`/api/v1/finance/goals/${id}`, { method: "DELETE" });
+}
+
+// Recurring income (renda fixa: salário + benefícios)
+
+export function getIncomes(): Promise<RecurringIncome[]> {
+  return request("/api/v1/finance/incomes");
+}
+
+export function createIncome(data: {
+  name: string;
+  amount: number;
+  kind: string;
+}): Promise<RecurringIncome> {
+  return request("/api/v1/finance/incomes", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export function deleteIncome(id: number): Promise<void> {
+  return request(`/api/v1/finance/incomes/${id}`, { method: "DELETE" });
 }
 
 // Trend (month-by-month)

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ApiError, checkRoutineItem } from "@/lib/api";
 import { routineLabel, useI18n } from "@/lib/i18n";
 import { RoutineItem } from "@/types";
+import { Check } from "lucide-react";
 
 export default function RoutineChecklist({
   items,
@@ -51,7 +52,7 @@ export default function RoutineChecklist({
                           : "border-line"
                   }`}
                 >
-                  {item.status === "DONE" && "✓"}
+                  {item.status === "DONE" && <Check size={14} />}
                   {item.status === "LATE" && "!"}
                   {item.status === "SKIPPED" && "–"}
                 </span>

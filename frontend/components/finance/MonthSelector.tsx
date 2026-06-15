@@ -1,6 +1,7 @@
 "use client";
 
 import { useI18n } from "@/lib/i18n";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface Props {
   year: number;
@@ -27,18 +28,18 @@ export default function MonthSelector({ year, month, onChange }: Props) {
         type="button"
         onClick={() => shift(-1)}
         aria-label="previous month"
-        className="rounded-full px-3 py-1 text-sm font-bold text-secondary transition-colors hover:bg-elevated hover:text-foreground"
+        className="rounded-full p-1.5 text-secondary transition-colors hover:bg-elevated hover:text-foreground"
       >
-        ←
+        <ChevronLeft size={16} />
       </button>
       <span className="min-w-[8rem] text-center text-sm font-bold capitalize">{label}</span>
       <button
         type="button"
         onClick={() => shift(1)}
         aria-label="next month"
-        className="rounded-full px-3 py-1 text-sm font-bold text-secondary transition-colors hover:bg-elevated hover:text-foreground"
+        className="rounded-full p-1.5 text-secondary transition-colors hover:bg-elevated hover:text-foreground"
       >
-        →
+        <ChevronRight size={16} />
       </button>
     </div>
   );

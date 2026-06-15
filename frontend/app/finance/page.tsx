@@ -3,15 +3,19 @@
 import { useCallback, useEffect, useState } from "react";
 import AddBillModal from "@/components/finance/AddBillModal";
 import AddGoalModal from "@/components/finance/AddGoalModal";
+import AddIncomeModal from "@/components/finance/AddIncomeModal";
 import AddInstallmentModal from "@/components/finance/AddInstallmentModal";
 import AddTransactionModal from "@/components/finance/AddTransactionModal";
 import BillsList from "@/components/finance/BillsList";
+import IncomeList from "@/components/finance/IncomeList";
 import CategoryBudgets from "@/components/finance/CategoryBudgets";
 import CategoryManagerModal from "@/components/finance/CategoryManagerModal";
 import InstallmentsList from "@/components/finance/InstallmentsList";
+import Modal from "@/components/finance/Modal";
 import MonthSelector from "@/components/finance/MonthSelector";
 import RuleBreakdown from "@/components/finance/RuleBreakdown";
 import SavingsGoals from "@/components/finance/SavingsGoals";
+import SpendingRecommendation from "@/components/finance/SpendingRecommendation";
 import SummaryCards from "@/components/finance/SummaryCards";
 import TransactionList from "@/components/finance/TransactionList";
 import TrendChart from "@/components/finance/TrendChart";
@@ -22,6 +26,7 @@ import {
   getCategories,
   getFinanceOverview,
   getGoals,
+  getIncomes,
   getInstallmentsForMonth,
   getTransactions,
   getTrend,
@@ -33,6 +38,7 @@ import {
   Category,
   FinanceOverview,
   InstallmentStatus,
+  RecurringIncome,
   SavingsGoal,
   Transaction,
   TrendPoint,
@@ -53,6 +59,7 @@ export default function FinancePage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [installments, setInstallments] = useState<InstallmentStatus[]>([]);
   const [goals, setGoals] = useState<SavingsGoal[]>([]);
+  const [incomes, setIncomes] = useState<RecurringIncome[]>([]);
   const [trend, setTrend] = useState<TrendPoint[]>([]);
 
   const [showTxn, setShowTxn] = useState(false);
@@ -60,6 +67,8 @@ export default function FinancePage() {
   const [showCats, setShowCats] = useState(false);
   const [showInstallment, setShowInstallment] = useState(false);
   const [showGoal, setShowGoal] = useState(false);
+  const [showIncome, setShowIncome] = useState(false);
+  const [showRecommendation, setShowRecommendation] = useState(false);
 
   const load = useCallback(() => {
     getFinanceOverview(year, month).then(setOverview).catch(() => {});
@@ -68,6 +77,7 @@ export default function FinancePage() {
     getCategories().then(setCategories).catch(() => {});
     getInstallmentsForMonth(year, month).then(setInstallments).catch(() => {});
     getGoals().then(setGoals).catch(() => {});
+    getIncomes().then(setIncomes).catch(() => {});
     getTrend(year, month, 6).then(setTrend).catch(() => {});
   }, [year, month]);
 
@@ -103,14 +113,39 @@ export default function FinancePage() {
             <SummaryCards data={overview} />
 
             <Card
-              title={t("finance.rule_503020")}
+              title={t("finance.incomes")}
               action={
-                <button type="button" className={SMALL_BTN} onClick={() => setShowCats(true)}>
-                  {t("finance.manage_categories")}
-                </button>
+                <div className="flex items-center gap-3">
+                  <span className="text-xs font-bold text-emerald-400">
+                    {formatMoney(overview.recurring_income, locale)}
+                  </span>
+                  <button type="button" className={SMALL_BTN} onClick={() => setShowIncome(true)}>
+                    {t("finance.add_income")}
+                  </button>
+                </div>
               }
             >
-              <RuleBreakdown groups={overview.groups} income={overview.income} />
+              <IncomeList incomes={incomes} onChanged={load} />
+            </Card>
+
+            <Card
+              title={t("finance.rule_503020")}
+              action={
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    className={SMALL_BTN}
+                    onClick={() => setShowRecommendation(true)}
+                  >
+                    {t("finance.see_recommendation")}
+                  </button>
+                  <button type="button" className={SMALL_BTN} onClick={() => setShowCats(true)}>
+                    {t("finance.manage_categories")}
+                  </button>
+                </div>
+              }
+            >
+              <RuleBreakdown groups={overview.groups} income={overview.total_income} />
             </Card>
 
             <Card title={t("finance.budgets")}>
@@ -228,6 +263,17 @@ export default function FinancePage() {
       )}
       {showGoal && (
         <AddGoalModal onClose={() => setShowGoal(false)} onSaved={load} />
+      )}
+      {showIncome && (
+        <AddIncomeModal onClose={() => setShowIncome(false)} onSaved={load} />
+      )}
+      {showRecommendation && overview && (
+        <Modal
+          title={t("finance.recommendation")}
+          onClose={() => setShowRecommendation(false)}
+        >
+          <SpendingRecommendation data={overview.recommendation} />
+        </Modal>
       )}
     </RequireAuth>
   );

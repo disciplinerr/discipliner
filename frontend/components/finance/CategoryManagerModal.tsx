@@ -9,9 +9,12 @@ import {
   getCategories,
   updateCategory,
 } from "@/lib/api";
+import AppIcon, { IconKey } from "@/lib/icons";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
+import IconPicker from "./IconPicker";
 import Modal from "./Modal";
+import { X } from "lucide-react";
 
 interface Props {
   onClose: () => void;
@@ -24,7 +27,7 @@ export default function CategoryManagerModal({ onClose, onChanged }: Props) {
   const { t } = useI18n();
   const [categories, setCategories] = useState<Category[]>([]);
   const [newName, setNewName] = useState("");
-  const [newEmoji, setNewEmoji] = useState("💸");
+  const [newIcon, setNewIcon] = useState<IconKey>("tag");
   const [newGroup, setNewGroup] = useState<BudgetGroup>("NEEDS");
   const [busy, setBusy] = useState(false);
 
@@ -62,11 +65,11 @@ export default function CategoryManagerModal({ onClose, onChanged }: Props) {
     try {
       await createCategory({
         name: newName.trim(),
-        emoji: newEmoji.trim() || "💸",
+        emoji: newIcon,
         group: newGroup,
       });
       setNewName("");
-      setNewEmoji("💸");
+      setNewIcon("tag");
       notify();
     } finally {
       setBusy(false);
@@ -84,7 +87,7 @@ export default function CategoryManagerModal({ onClose, onChanged }: Props) {
             key={c.id}
             className="flex flex-wrap items-center gap-2 rounded-xl border border-line bg-surface px-3 py-2"
           >
-            <span className="text-lg">{c.emoji}</span>
+            <AppIcon name={c.emoji} size={18} color={c.color} />
             <span className="min-w-0 flex-1 truncate text-sm font-semibold">{c.name}</span>
             <select
               value={c.group}
@@ -110,9 +113,9 @@ export default function CategoryManagerModal({ onClose, onChanged }: Props) {
               type="button"
               onClick={() => remove(c)}
               aria-label={t("finance.form.delete")}
-              className="rounded-lg px-2 py-1 text-xs font-bold text-muted transition-colors hover:text-rose-400"
+              className="rounded-lg px-2 py-1 text-muted transition-colors hover:text-rose-400"
             >
-              ✕
+              <X size={14} />
             </button>
           </div>
         ))}
@@ -123,12 +126,9 @@ export default function CategoryManagerModal({ onClose, onChanged }: Props) {
           {t("finance.form.add_category")}
         </p>
         <div className="flex gap-2">
-          <Input
-            value={newEmoji}
-            onChange={(e) => setNewEmoji(e.target.value)}
-            className="w-16 text-center"
-            maxLength={4}
-          />
+          <div className="w-16 shrink-0">
+            <IconPicker value={newIcon} onChange={setNewIcon} />
+          </div>
           <Input
             value={newName}
             onChange={(e) => setNewName(e.target.value)}

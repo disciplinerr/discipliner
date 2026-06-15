@@ -9,6 +9,7 @@ import PasswordInput from "@/components/ui/PasswordInput";
 import PasswordRules, { passwordValid } from "@/components/ui/PasswordRules";
 import { ApiError, register } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
+import { MailCheck } from "lucide-react";
 
 export default function RegisterPage() {
   const { t } = useI18n();
@@ -52,7 +53,7 @@ export default function RegisterPage() {
             <h1 className="text-2xl font-extrabold tracking-tight">discipliner</h1>
           </div>
           <div className="space-y-4 rounded-2xl border border-line bg-surface p-6 shadow-soft">
-            <p className="text-4xl">📧</p>
+            <MailCheck size={44} className="mx-auto text-emerald-400" />
             <h2 className="text-lg font-bold">{t("auth.verify_sent_title")}</h2>
             <p className="text-sm text-muted">{t("auth.verify_sent_text")}</p>
           </div>

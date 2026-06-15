@@ -2,6 +2,7 @@
 
 import RoutineItemManager from "@/components/routine/RoutineItemManager";
 import { useI18n } from "@/lib/i18n";
+import { X } from "lucide-react";
 
 interface Props {
   onClose: () => void;
@@ -28,9 +29,10 @@ export default function RoutineItemManagerModal({ onClose, onChanged }: Props) {
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg px-3 py-1.5 text-xs font-bold text-muted transition-colors hover:text-foreground hover:bg-elevated"
+            className="rounded-lg p-1.5 text-muted transition-colors hover:text-foreground hover:bg-elevated"
+            aria-label="Fechar"
           >
-            ✕
+            <X size={16} />
           </button>
         </div>
 
