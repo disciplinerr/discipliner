@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="320" viewBox="0 0 1200 320" fill="none" role="img" aria-label="Discipliner — Sem atalhos. Disciplina diária.">
+  <defs>
+    <!-- Subtle vignette so the card reads as elevated surface -->
+    <radialGradient id="glow" cx="28%" cy="40%" r="75%">
+      <stop offset="0%" stop-color="#1d1d1d"/>
+      <stop offset="100%" stop-color="#0a0a0a"/>
+    </radialGradient>
+    <linearGradient id="hair" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#262626" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#3a3a3a"/>
+      <stop offset="100%" stop-color="#262626" stop-opacity="0"/>
+    </linearGradient>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M32 0H0V32" fill="none" stroke="#161616" stroke-width="1"/>
+    </pattern>
+  </defs>
+
+  <!-- Card -->
+  <rect x="4" y="4" width="1192" height="312" rx="28" fill="url(#glow)"/>
+  <rect x="4" y="4" width="1192" height="312" rx="28" fill="url(#grid)" opacity="0.6"/>
+  <rect x="4.5" y="4.5" width="1191" height="311" rx="27.5" fill="none" stroke="#2e2e2e" stroke-width="1.5"/>
+
+  <!-- Logo badge: the 'D' mark from app/icon.svg -->
+  <g transform="translate(88 90)">
+    <rect width="140" height="140" rx="34" fill="#0a0a0a"/>
+    <rect x="1.5" y="1.5" width="137" height="137" rx="32.5" fill="none" stroke="#2e2e2e" stroke-width="3"/>
+    <g transform="translate(70 70) scale(0.215) translate(-256 -256)">
+      <path fill="#fafafa" fill-rule="evenodd"
+        d="M154 136 h84 a120 120 0 0 1 0 240 h-84 z M210 192 v128 h28 a64 64 0 0 0 0 -128 z"/>
+      <circle cx="358" cy="376" r="22" fill="#fafafa"/>
+    </g>
+  </g>
+
+  <!-- Wordmark -->
+  <text x="270" y="150"
+        font-family="'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace"
+        font-size="62" font-weight="700" letter-spacing="-1" fill="#fafafa">Discipliner</text>
+
+  <!-- Tagline -->
+  <text x="272" y="194"
+        font-family="'Nunito', system-ui, -apple-system, sans-serif"
+        font-size="24" font-weight="400" letter-spacing="0.5" fill="#a3a3a3">Sem atalhos. Disciplina diária.</text>
+
+  <!-- Divider -->
+  <rect x="272" y="218" width="600" height="1" fill="url(#hair)"/>
+
+  <!-- Feature chips -->
+  <g font-family="'JetBrains Mono', ui-monospace, monospace" font-size="16" fill="#a3a3a3">
+    <g transform="translate(272 240)">
+      <rect width="108" height="36" rx="18" fill="#141414" stroke="#262626"/>
+      <text x="54" y="23" text-anchor="middle">Inglês</text>
+    </g>
+    <g transform="translate(392 240)">
+      <rect width="124" height="36" rx="18" fill="#141414" stroke="#262626"/>
+      <text x="62" y="23" text-anchor="middle">Finanças</text>
+    </g>
+    <g transform="translate(528 240)">
+      <rect width="108" height="36" rx="18" fill="#141414" stroke="#262626"/>
+      <text x="54" y="23" text-anchor="middle">Rotina</text>
+    </g>
+    <g transform="translate(648 240)">
+      <rect width="142" height="36" rx="18" fill="#141414" stroke="#262626"/>
+      <text x="71" y="23" text-anchor="middle">Challenges</text>
+    </g>
+    <g transform="translate(802 240)">
+      <rect width="108" height="36" rx="18" fill="#141414" stroke="#262626"/>
+      <text x="54" y="23" text-anchor="middle">Trilha</text>
+    </g>
+  </g>
+
+  <!-- Corner accent dot, echoing the logo mark -->
+  <circle cx="1120" cy="80" r="6" fill="#fafafa"/>
+  <circle cx="1120" cy="80" r="14" fill="none" stroke="#2e2e2e" stroke-width="2"/>
+</svg>
