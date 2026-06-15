@@ -14,6 +14,7 @@ import InstallmentsList from "@/components/finance/InstallmentsList";
 import MonthSelector from "@/components/finance/MonthSelector";
 import RuleBreakdown from "@/components/finance/RuleBreakdown";
 import SavingsGoals from "@/components/finance/SavingsGoals";
+import SpendingRecommendation from "@/components/finance/SpendingRecommendation";
 import SummaryCards from "@/components/finance/SummaryCards";
 import TransactionList from "@/components/finance/TransactionList";
 import TrendChart from "@/components/finance/TrendChart";
@@ -134,6 +135,10 @@ export default function FinancePage() {
               }
             >
               <RuleBreakdown groups={overview.groups} income={overview.total_income} />
+            </Card>
+
+            <Card title={t("finance.recommendation")}>
+              <SpendingRecommendation data={overview.recommendation} />
             </Card>
 
             <Card title={t("finance.budgets")}>

@@ -372,6 +372,29 @@ class GroupSpendOut(BaseModel):
     over_budget: bool
 
 
+class RecommendationGroupOut(BaseModel):
+    group: str          # NEEDS / WANTS / SAVINGS
+    pct: int            # 50 / 30 / 20
+    amount: float       # recommended R$ for this group
+
+
+class RecommendationItemOut(BaseModel):
+    key: str            # housing, food, transport, ...
+    group: str
+    pct: int
+    amount: float
+
+
+class RecommendationOut(BaseModel):
+    income: float
+    actual_spending: float
+    leftover: float
+    savings_rate: float
+    status: str         # healthy / tight / over / unknown
+    groups: list[RecommendationGroupOut]
+    items: list[RecommendationItemOut]
+
+
 class FinanceOverviewOut(BaseModel):
     year: int
     month: int
@@ -383,6 +406,7 @@ class FinanceOverviewOut(BaseModel):
     total_income: float              # recurring_income + income
     total_spending: float            # expense + bills_total + installments_month
     net: float                       # total_income - total_spending
+    recommendation: RecommendationOut
     total_budget: float
     bills_total: float
     bills_paid: float

@@ -13,7 +13,11 @@ from app.models import (
     User,
 )
 from app.core.security import hash_password
-from app.services.finance_service import build_overview
+from app.services.finance_service import (
+    build_overview,
+    spending_recommendation,
+    trend_for_months,
+)
 
 
 def _make_user(db) -> User:
@@ -79,3 +83,34 @@ def test_overview_zero_income_no_div_by_zero(db):
     assert ov["total_income"] == 0
     assert ov["total_spending"] == 0
     assert ov["savings_rate"] == 0.0
+
+
+def test_recommendation_amounts_and_status():
+    rec = spending_recommendation(income=5000, actual_spending=3000)
+    # 50/30/20 group caps
+    g = {row["group"]: row for row in rec["groups"]}
+    assert g["NEEDS"]["amount"] == 2500
+    assert g["WANTS"]["amount"] == 1500
+    assert g["SAVINGS"]["amount"] == 1000
+    # Per-area fractions sum to the income
+    assert round(sum(it["amount"] for it in rec["items"]), 2) == 5000
+    # 40% leftover -> healthy
+    assert rec["status"] == "healthy"
+
+    assert spending_recommendation(5000, 4500)["status"] == "tight"   # 10% left
+    assert spending_recommendation(5000, 6000)["status"] == "over"    # negative
+    assert spending_recommendation(0, 0)["status"] == "unknown"
+
+
+def test_trend_counts_recurring_only_from_creation_month(db):
+    """Salary created this month must not inflate previous months' income."""
+    user = _make_user(db)
+    db.add(
+        RecurringIncome(user_id=user.id, name="Salário", amount=5000, kind=IncomeKind.SALARY)
+    )
+    db.commit()
+
+    points = trend_for_months(db, user.id, 2026, 6, 6)  # jan..jun
+    assert points[-1]["month"] == 6
+    assert points[-1]["income"] == 5000      # current month: salary counts
+    assert all(p["income"] == 0 for p in points[:-1])  # past months: no history

@@ -19,7 +19,7 @@ import {
   getTrend,
 } from "@/lib/api";
 import { formatMoney } from "@/lib/finance";
-import { routineLabel, useI18n } from "@/lib/i18n";
+import { routineLabel, TKey, useI18n } from "@/lib/i18n";
 import {
   ChallengeHistoryItem,
   DashboardStats,
@@ -29,6 +29,13 @@ import {
   TrailProgress,
   TrendPoint,
 } from "@/types";
+
+const FINANCE_STATUS_STYLE: Record<string, string> = {
+  healthy: "border-emerald-500/40 text-emerald-400",
+  tight: "border-amber-500/40 text-amber-400",
+  over: "border-rose-500/40 text-rose-400",
+  unknown: "border-line text-muted",
+};
 
 const RESULT_STYLE: Record<string, string> = {
   PASS: "bg-foreground text-background",
@@ -219,9 +226,20 @@ export default function DashboardPage() {
         {/* Finance overview: summary + monthly income vs spending chart */}
         <Card>
           <div className="mb-4 flex items-center justify-between">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted">
-              {t("dashboard.finance")}
-            </p>
+            <div className="flex items-center gap-3">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted">
+                {t("dashboard.finance")}
+              </p>
+              {finance && (
+                <span
+                  className={`rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
+                    FINANCE_STATUS_STYLE[finance.recommendation.status]
+                  }`}
+                >
+                  {t(`dashboard.fin_status.${finance.recommendation.status}` as TKey)}
+                </span>
+              )}
+            </div>
             <Link
               href="/finance"
               className="text-xs font-bold text-muted underline-offset-4 transition-colors hover:text-foreground hover:underline"

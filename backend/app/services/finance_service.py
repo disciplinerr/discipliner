@@ -48,6 +48,62 @@ GROUP_TARGETS: dict[BudgetGroup, int] = {
     BudgetGroup.SAVINGS: 20,
 }
 
+# Recommended monthly allocation for a balanced budget, as a fraction of net
+# income. Built on the 50/30/20 rule (Warren & Tyagi, "All Your Worth") refined
+# with commonly cited personal-finance ceilings: housing ≤30% (the classic
+# "30% rule"), food ~12%, transport ~12%. Fractions sum to 1.0.
+# key -> (fraction, 50/30/20 group)
+SPENDING_GUIDELINES: dict[str, tuple[float, BudgetGroup]] = {
+    "housing": (0.30, BudgetGroup.NEEDS),     # aluguel/financiamento + contas de casa
+    "food": (0.12, BudgetGroup.NEEDS),        # mercado + alimentação essencial
+    "transport": (0.08, BudgetGroup.NEEDS),   # transporte
+    "leisure": (0.10, BudgetGroup.WANTS),     # lazer, restaurantes
+    "shopping": (0.10, BudgetGroup.WANTS),    # compras, assinaturas, pessoal
+    "education": (0.10, BudgetGroup.WANTS),   # educação, desenvolvimento
+    "savings": (0.15, BudgetGroup.SAVINGS),   # reserva + investimento
+    "debt": (0.05, BudgetGroup.SAVINGS),      # quitação de dívidas
+}
+
+
+def spending_recommendation(income: float, actual_spending: float) -> dict:
+    """Project a healthy monthly budget from income and rate the current spend.
+
+    Returns the 50/30/20 group caps, a finer per-area breakdown, and a verdict
+    based on how much of income is left after spending (the savings rate):
+    >=20% healthy, 0–20% tight, negative over-budget."""
+    groups = [
+        {"group": g.value, "pct": pct, "amount": round(income * pct / 100, 2)}
+        for g, pct in GROUP_TARGETS.items()
+    ]
+    items = [
+        {
+            "key": key,
+            "group": group.value,
+            "pct": round(frac * 100),
+            "amount": round(income * frac, 2),
+        }
+        for key, (frac, group) in SPENDING_GUIDELINES.items()
+    ]
+    leftover = income - actual_spending
+    rate = (leftover / income) if income > 0 else 0.0
+    if income <= 0:
+        status = "unknown"
+    elif rate >= 0.20:
+        status = "healthy"
+    elif rate >= 0:
+        status = "tight"
+    else:
+        status = "over"
+    return {
+        "income": income,
+        "actual_spending": actual_spending,
+        "leftover": leftover,
+        "savings_rate": rate,
+        "status": status,
+        "groups": groups,
+        "items": items,
+    }
+
 
 def ensure_categories_seeded(db: Session, user_id: int) -> None:
     """Seed default categories per-key — idempotent and concurrency-safe.
@@ -223,13 +279,29 @@ def trend_for_months(db: Session, user_id: int, year: int, month: int, months: i
     Mirrors the overview totals so the chart matches the summary cards:
     income  = recurring income (salário + VR/VT) + one-off INCOME transactions;
     expense = one-off EXPENSE transactions + fixed bills + installment charges.
-    Recurring income is a fixed monthly figure, so it's applied to every month."""
-    recurring_income = sum(
-        ri.amount for ri in get_recurring_incomes(db, user_id) if ri.is_active
+
+    Recurring income and fixed bills have no per-month ledger — the only history
+    we can honestly attribute is "from when they were created onward". So each is
+    counted only in months at/after its ``created_at`` month, instead of being
+    smeared flat across every month. Installments are already month-bounded by
+    their span, and transactions are anchored to their own date."""
+
+    def _month_idx(y: int, m: int) -> int:
+        return y * 12 + (m - 1)
+
+    incomes = [ri for ri in get_recurring_incomes(db, user_id) if ri.is_active]
+    bills = list(
+        db.scalars(
+            select(RecurringBill).where(
+                RecurringBill.user_id == user_id, RecurringBill.is_active.is_(True)
+            )
+        )
     )
+
     points: list[dict] = []
     for i in range(months - 1, -1, -1):
         y, m = _add_months(year, month, -i)
+        idx = _month_idx(y, m)
         first, last = _month_bounds(y, m)
         txns = db.scalars(
             select(Transaction).where(
@@ -238,16 +310,25 @@ def trend_for_months(db: Session, user_id: int, year: int, month: int, months: i
                 Transaction.date <= last,
             )
         ).all()
-        income = recurring_income + sum(
-            t.amount for t in txns if t.kind == TransactionKind.INCOME
+        recurring_income = sum(
+            ri.amount
+            for ri in incomes
+            if _month_idx(ri.created_at.year, ri.created_at.month) <= idx
         )
-        bills = sum(b["amount"] for b in bills_for_month(db, user_id, y, m))
+        bills_total = sum(
+            b.amount
+            for b in bills
+            if _month_idx(b.created_at.year, b.created_at.month) <= idx
+        )
         installments = sum(
             r["installment_amount"] for r in installments_for_month(db, user_id, y, m)
         )
+        income = recurring_income + sum(
+            t.amount for t in txns if t.kind == TransactionKind.INCOME
+        )
         expense = (
             sum(t.amount for t in txns if t.kind == TransactionKind.EXPENSE)
-            + bills
+            + bills_total
             + installments
         )
         points.append(
@@ -370,6 +451,7 @@ def build_overview(db: Session, user_id: int, year: int, month: int) -> dict:
         "total_income": total_income,
         "total_spending": total_spending,
         "net": net,
+        "recommendation": spending_recommendation(total_income, total_spending),
         "total_budget": sum(c.monthly_budget for c in categories),
         "bills_total": bills_total,
         "bills_paid": bills_paid,

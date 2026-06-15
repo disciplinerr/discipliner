@@ -245,6 +245,31 @@ export interface CategorySpend {
   over_budget: boolean;
 }
 
+export type SpendingStatus = "healthy" | "tight" | "over" | "unknown";
+
+export interface RecommendationGroup {
+  group: BudgetGroup;
+  pct: number;
+  amount: number;
+}
+
+export interface RecommendationItem {
+  key: string;
+  group: BudgetGroup;
+  pct: number;
+  amount: number;
+}
+
+export interface Recommendation {
+  income: number;
+  actual_spending: number;
+  leftover: number;
+  savings_rate: number;
+  status: SpendingStatus;
+  groups: RecommendationGroup[];
+  items: RecommendationItem[];
+}
+
 export interface FinanceOverview {
   year: number;
   month: number;
@@ -256,6 +281,7 @@ export interface FinanceOverview {
   total_income: number;
   total_spending: number;
   net: number;
+  recommendation: Recommendation;
   total_budget: number;
   bills_total: number;
   bills_paid: number;
