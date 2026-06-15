@@ -1,6 +1,6 @@
 from datetime import date, datetime
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
 
 
 # --- Auth ---
@@ -8,6 +8,13 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field
 class UserCreate(BaseModel):
     email: EmailStr
     password: str = Field(min_length=8)
+    password_confirm: str = Field(min_length=8)
+
+    @model_validator(mode="after")
+    def _passwords_match(self) -> "UserCreate":
+        if self.password != self.password_confirm:
+            raise ValueError("Passwords do not match")
+        return self
 
 
 class UserOut(BaseModel):
@@ -41,6 +48,10 @@ class ForgotPasswordRequest(BaseModel):
 class ResetPasswordRequest(BaseModel):
     token: str = Field(min_length=1)
     new_password: str = Field(min_length=8)
+
+
+class VerifyEmailRequest(BaseModel):
+    token: str = Field(min_length=1)
 
 
 # --- Challenges ---
@@ -247,3 +258,233 @@ class EnglishStatsOut(BaseModel):
     pass_rate_7d: float
     mature_items: int
     total_items: int
+
+
+# --- Finance / expense control ---
+
+class CategoryOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    category_key: str
+    name: str
+    emoji: str
+    color: str
+    group: str
+    monthly_budget: float
+    is_system: bool
+    is_active: bool
+    position: int
+
+
+class CategoryCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+    emoji: str = Field(default="💸", max_length=8)
+    color: str = Field(default="#a3a3a3", max_length=9)
+    group: str = Field(default="NEEDS", pattern="^(NEEDS|WANTS|SAVINGS)$")
+    monthly_budget: float = Field(default=0.0, ge=0)
+
+
+class CategoryUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=120)
+    emoji: str | None = Field(default=None, max_length=8)
+    color: str | None = Field(default=None, max_length=9)
+    group: str | None = Field(default=None, pattern="^(NEEDS|WANTS|SAVINGS)$")
+    monthly_budget: float | None = Field(default=None, ge=0)
+    is_active: bool | None = None
+
+
+class TransactionOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    category_id: int | None
+    description: str
+    amount: float
+    kind: str
+    date: date
+
+
+class TransactionCreate(BaseModel):
+    category_id: int | None = None
+    description: str = Field(min_length=1, max_length=255)
+    amount: float = Field(gt=0)
+    kind: str = Field(default="EXPENSE", pattern="^(EXPENSE|INCOME)$")
+    date: date
+
+
+class BillOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    category_id: int | None
+    name: str
+    amount: float
+    due_day: int
+    is_active: bool
+
+
+class BillCreate(BaseModel):
+    category_id: int | None = None
+    name: str = Field(min_length=1, max_length=120)
+    amount: float = Field(gt=0)
+    due_day: int = Field(ge=1, le=31)
+
+
+class BillUpdate(BaseModel):
+    category_id: int | None = None
+    name: str | None = Field(default=None, min_length=1, max_length=120)
+    amount: float | None = Field(default=None, gt=0)
+    due_day: int | None = Field(default=None, ge=1, le=31)
+    is_active: bool | None = None
+
+
+class BillStatusOut(BaseModel):
+    """A bill projected onto a specific month with its payment state."""
+
+    id: int
+    name: str
+    amount: float
+    due_day: int
+    due_date: date
+    category_id: int | None
+    paid: bool
+    paid_at: datetime | None
+    overdue: bool
+
+
+class CategorySpendOut(BaseModel):
+    category_id: int
+    name: str
+    emoji: str
+    color: str
+    group: str
+    budget: float
+    spent: float
+    over_budget: bool
+
+
+class GroupSpendOut(BaseModel):
+    group: str
+    budget: float
+    spent: float
+    target_pct: int  # 50 / 30 / 20
+    over_budget: bool
+
+
+class FinanceOverviewOut(BaseModel):
+    year: int
+    month: int
+    income: float
+    expense: float
+    balance: float
+    savings_rate: float
+    total_budget: float
+    bills_total: float
+    bills_paid: float
+    bills_pending: float
+    bills_overdue: int
+    installments_month: float        # sum of installment charges landing this month
+    installments_count: int          # how many plans are active this month
+    installments_outstanding: float  # total still owed from this month onward
+    groups: list[GroupSpendOut]
+    categories: list[CategorySpendOut]
+
+
+# --- Installments (parcelas) ---
+
+class InstallmentOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    category_id: int | None
+    description: str
+    installment_amount: float
+    total_installments: int
+    start_year: int
+    start_month: int
+    due_day: int
+    is_active: bool
+
+
+class InstallmentCreate(BaseModel):
+    category_id: int | None = None
+    description: str = Field(min_length=1, max_length=255)
+    installment_amount: float = Field(gt=0)
+    total_installments: int = Field(ge=1, le=360)
+    start_year: int = Field(ge=2020, le=2100)
+    start_month: int = Field(ge=1, le=12)
+    due_day: int = Field(default=1, ge=1, le=31)
+
+
+class InstallmentUpdate(BaseModel):
+    category_id: int | None = None
+    description: str | None = Field(default=None, min_length=1, max_length=255)
+    installment_amount: float | None = Field(default=None, gt=0)
+    total_installments: int | None = Field(default=None, ge=1, le=360)
+    start_year: int | None = Field(default=None, ge=2020, le=2100)
+    start_month: int | None = Field(default=None, ge=1, le=12)
+    due_day: int | None = Field(default=None, ge=1, le=31)
+    is_active: bool | None = None
+
+
+class InstallmentStatusOut(BaseModel):
+    """An installment plan projected onto a specific month."""
+
+    id: int
+    description: str
+    category_id: int | None
+    installment_amount: float
+    number: int               # which installment this month is (1-based)
+    total_installments: int
+    remaining_count: int      # this charge + future ones
+    remaining_amount: float
+    due_date: date
+    end_year: int
+    end_month: int
+
+
+# --- Savings goals (metas) ---
+
+class SavingsGoalOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+    target_amount: float
+    current_amount: float
+    emoji: str
+    color: str
+    deadline: date | None
+    is_active: bool
+
+
+class SavingsGoalCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+    target_amount: float = Field(gt=0)
+    current_amount: float = Field(default=0.0, ge=0)
+    emoji: str = Field(default="🎯", max_length=8)
+    color: str = Field(default="#4ade80", max_length=9)
+    deadline: date | None = None
+
+
+class SavingsGoalUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=120)
+    target_amount: float | None = Field(default=None, gt=0)
+    current_amount: float | None = Field(default=None, ge=0)
+    emoji: str | None = Field(default=None, max_length=8)
+    color: str | None = Field(default=None, max_length=9)
+    deadline: date | None = None
+    is_active: bool | None = None
+
+
+class SavingsGoalContribute(BaseModel):
+    amount: float = Field(gt=0)  # added to current_amount (negative not allowed here)
+
+
+class TrendPointOut(BaseModel):
+    year: int
+    month: int
+    income: float
+    expense: float
+    balance: float

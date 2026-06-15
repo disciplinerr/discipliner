@@ -11,9 +11,12 @@ const LINKS: { href: string; label: TKey }[] = [
   { href: "/dashboard", label: "nav.dashboard" },
   { href: "/routine", label: "nav.routine" },
   { href: "/challenges", label: "nav.challenge" },
-  { href: "/review", label: "nav.review" },
+  // Hidden for now — review trail ("trilha de revisão") and trail ("trilha")
+  // will be revisited in a dedicated issue/branch.
+  // { href: "/review", label: "nav.review" },
   { href: "/english", label: "nav.english" },
-  { href: "/trail", label: "nav.trail" },
+  // { href: "/trail", label: "nav.trail" },
+  { href: "/finance", label: "nav.finance" },
 ];
 
 export default function Nav() {

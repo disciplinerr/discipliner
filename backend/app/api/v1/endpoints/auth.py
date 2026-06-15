@@ -17,7 +17,7 @@ from app.core.security import (
     verify_password,
 )
 from app.db.session import get_db
-from app.models import PasswordResetToken, User
+from app.models import EmailVerificationToken, PasswordResetToken, User
 from app.schemas import (
     ForgotPasswordRequest,
     LoginRequest,
@@ -26,6 +26,7 @@ from app.schemas import (
     TokenPair,
     UserCreate,
     UserOut,
+    VerifyEmailRequest,
 )
 
 _PASSWORD_RULES = re.compile(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$")
@@ -33,22 +34,67 @@ _PASSWORD_RULES = re.compile(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$")
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-@router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)
+# Same opaque response whether the email is new or already taken, so the
+# endpoint can't be used to enumerate which addresses have accounts.
+_REGISTER_RESPONSE = {
+    "message": "If the address is valid, a confirmation email was sent. Check your inbox."
+}
+
+
+@router.post("/register", status_code=status.HTTP_202_ACCEPTED)
 @limiter.limit("5/minute")
 def register(request: Request, payload: UserCreate, db: Session = Depends(get_db)):
+    from app.services.email_service import (
+        send_existing_account_email,
+        send_verification_email,
+    )
+
     if not _PASSWORD_RULES.match(payload.password):
         raise HTTPException(
             status_code=422,
             detail="Password must be at least 8 characters and include uppercase, lowercase, and a digit.",
         )
+
     existing = db.scalar(select(User).where(User.email == payload.email))
     if existing:
-        raise HTTPException(status_code=409, detail="Email already registered")
-    user = User(email=payload.email, hashed_password=hash_password(payload.password))
+        # Don't reveal that the account exists. Instead, tell the real owner
+        # (via their inbox) that someone tried to register, and return the same
+        # generic response to the client.
+        login_url = f"{settings.FRONTEND_URL}/login"
+        reset_url = f"{settings.FRONTEND_URL}/forgot-password"
+        try:
+            send_existing_account_email(existing.email, login_url, reset_url)
+        except Exception:
+            pass  # logged inside; never surface to the client
+        return _REGISTER_RESPONSE
+
+    user = User(
+        email=payload.email,
+        hashed_password=hash_password(payload.password),
+        is_verified=False,
+    )
     db.add(user)
+    db.flush()  # assign user.id before issuing the token
+
+    token_value = secrets.token_urlsafe(48)
+    now = datetime.now(timezone.utc)
+    db.add(
+        EmailVerificationToken(
+            user_id=user.id,
+            token=token_value,
+            expires_at=now + timedelta(hours=24),
+            used=False,
+            created_at=now,
+        )
+    )
     db.commit()
-    db.refresh(user)
-    return user
+
+    verify_url = f"{settings.FRONTEND_URL}/verify-email?token={token_value}"
+    try:
+        send_verification_email(user.email, verify_url)
+    except Exception:
+        pass  # logged inside send_verification_email; don't reveal failure
+    return _REGISTER_RESPONSE
 
 
 @router.post("/login", response_model=TokenPair)
@@ -57,10 +103,41 @@ def login(request: Request, payload: LoginRequest, db: Session = Depends(get_db)
     user = db.scalar(select(User).where(User.email == payload.email))
     if user is None or not verify_password(payload.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid email or password")
+    # Only revealed once credentials are correct — an attacker without the
+    # password still can't tell verified from unverified, so this doesn't
+    # reopen enumeration.
+    if not user.is_verified:
+        raise HTTPException(
+            status_code=403,
+            detail="Please confirm your email before signing in. Check your inbox.",
+        )
     return TokenPair(
         access_token=create_access_token(str(user.id)),
         refresh_token=create_refresh_token(str(user.id)),
     )
+
+
+@router.post("/verify-email", status_code=200)
+@limiter.limit("10/minute")
+def verify_email(request: Request, payload: VerifyEmailRequest, db: Session = Depends(get_db)):
+    record = db.scalar(
+        select(EmailVerificationToken).where(EmailVerificationToken.token == payload.token)
+    )
+    if record is None:
+        raise HTTPException(status_code=404, detail="Invalid verification token")
+    if record.used:
+        raise HTTPException(status_code=410, detail="Verification token already used")
+    if record.expires_at < datetime.now(timezone.utc):
+        raise HTTPException(status_code=410, detail="Verification token has expired")
+
+    user = db.get(User, record.user_id)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user.is_verified = True
+    record.used = True
+    db.commit()
+    return {"message": "Email confirmed. You can now sign in."}
 
 
 @router.post("/refresh", response_model=TokenPair)

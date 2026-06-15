@@ -90,7 +90,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Summary cards */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2">
           <Link href="/routine" className="group">
             <Card className="h-full transition-colors group-hover:border-muted">
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted">
@@ -143,6 +143,8 @@ export default function DashboardPage() {
             </Card>
           </Link>
 
+          {/* Review ("trilha de revisão") and Trail ("trilha") cards hidden for
+              now — to be revisited in a dedicated issue/branch.
           <Link href="/review" className="group">
             <Card className="h-full transition-colors group-hover:border-muted">
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted">
@@ -196,6 +198,7 @@ export default function DashboardPage() {
               <ProgressBar value={completedPhases} total={totalPhases} />
             </Card>
           </Link>
+          */}
         </div>
 
         {/* Progress analytics row */}
