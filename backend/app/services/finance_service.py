@@ -24,6 +24,7 @@ from app.models import (
     SavingsGoal,
     Transaction,
     TransactionKind,
+    User,
 )
 
 # key -> (name, emoji, color, group)
@@ -289,6 +290,12 @@ def trend_for_months(db: Session, user_id: int, year: int, month: int, months: i
     def _month_idx(y: int, m: int) -> int:
         return y * 12 + (m - 1)
 
+    # The chart starts at the user's signup month — there's no meaningful
+    # history before they joined (they'd have to backfill every past expense),
+    # so earlier months are dropped rather than shown empty.
+    signup = db.scalar(select(User.created_at).where(User.id == user_id))
+    signup_idx = _month_idx(signup.year, signup.month) if signup else None
+
     incomes = [ri for ri in get_recurring_incomes(db, user_id) if ri.is_active]
     bills = list(
         db.scalars(
@@ -302,6 +309,8 @@ def trend_for_months(db: Session, user_id: int, year: int, month: int, months: i
     for i in range(months - 1, -1, -1):
         y, m = _add_months(year, month, -i)
         idx = _month_idx(y, m)
+        if signup_idx is not None and idx < signup_idx:
+            continue  # before the user joined — skip
         first, last = _month_bounds(y, m)
         txns = db.scalars(
             select(Transaction).where(

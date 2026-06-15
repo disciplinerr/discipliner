@@ -102,15 +102,28 @@ def test_recommendation_amounts_and_status():
     assert spending_recommendation(0, 0)["status"] == "unknown"
 
 
-def test_trend_counts_recurring_only_from_creation_month(db):
-    """Salary created this month must not inflate previous months' income."""
-    user = _make_user(db)
+def test_trend_starts_at_signup_month(db):
+    """Trend drops months before the user joined and counts salary from now on."""
+    user = _make_user(db)  # created_at = utcnow
     db.add(
         RecurringIncome(user_id=user.id, name="Salário", amount=5000, kind=IncomeKind.SALARY)
     )
     db.commit()
 
-    points = trend_for_months(db, user.id, 2026, 6, 6)  # jan..jun
-    assert points[-1]["month"] == 6
-    assert points[-1]["income"] == 5000      # current month: salary counts
-    assert all(p["income"] == 0 for p in points[:-1])  # past months: no history
+    sy, sm = user.created_at.year, user.created_at.month
+    points = trend_for_months(db, user.id, sy, sm, 6)  # asks 6 months ending now
+    # Only the signup month remains — earlier months are skipped.
+    assert len(points) == 1
+    assert points[0]["year"] == sy and points[0]["month"] == sm
+    assert points[0]["income"] == 5000
+
+
+def test_trend_keeps_months_from_signup_onward(db):
+    """Months at/after signup are kept; the window still ends at the asked month."""
+    user = _make_user(db)
+    sy, sm = user.created_at.year, user.created_at.month
+    # Ask a 3-month window ending 2 months after signup -> all 3 are >= signup.
+    ey, em = (sy, sm + 2) if sm <= 10 else (sy + 1, sm + 2 - 12)
+    points = trend_for_months(db, user.id, ey, em, 3)
+    assert len(points) == 3
+    assert points[0]["year"] == sy and points[0]["month"] == sm
