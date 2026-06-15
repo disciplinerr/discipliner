@@ -1,4 +1,7 @@
 import {
+  Bill,
+  BillStatus,
+  Category,
   Challenge,
   ChallengeHistoryItem,
   DashboardStats,
@@ -6,6 +9,9 @@ import {
   EnglishSession,
   EnglishStats,
   ExecuteResult,
+  FinanceOverview,
+  Installment,
+  InstallmentStatus,
   PreviewChallenge,
   ReviewCard,
   ReviewStats,
@@ -13,9 +19,12 @@ import {
   RoutineItem,
   RoutineMonth,
   RoutineWeek,
+  SavingsGoal,
   Submission,
   TokenPair,
+  Transaction,
   TrailProgress,
+  TrendPoint,
   User,
   UserRoutineItem,
 } from "@/types";
@@ -274,4 +283,196 @@ export function getEnglishStats(): Promise<EnglishStats> {
 
 export function getDashboardStats(): Promise<DashboardStats> {
   return request("/api/v1/dashboard/stats");
+}
+
+// --- Finance ---
+
+export function getFinanceOverview(year: number, month: number): Promise<FinanceOverview> {
+  return request(`/api/v1/finance/overview?year=${year}&month=${month}`);
+}
+
+export function getCategories(): Promise<Category[]> {
+  return request("/api/v1/finance/categories");
+}
+
+export function createCategory(data: {
+  name: string;
+  emoji?: string;
+  color?: string;
+  group?: string;
+  monthly_budget?: number;
+}): Promise<Category> {
+  return request("/api/v1/finance/categories", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export function updateCategory(
+  id: number,
+  data: Partial<{
+    name: string;
+    emoji: string;
+    color: string;
+    group: string;
+    monthly_budget: number;
+    is_active: boolean;
+  }>,
+): Promise<Category> {
+  return request(`/api/v1/finance/categories/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
+export function deleteCategory(id: number): Promise<void> {
+  return request(`/api/v1/finance/categories/${id}`, { method: "DELETE" });
+}
+
+export function getTransactions(year: number, month: number): Promise<Transaction[]> {
+  return request(`/api/v1/finance/transactions?year=${year}&month=${month}`);
+}
+
+export function createTransaction(data: {
+  category_id?: number | null;
+  description: string;
+  amount: number;
+  kind: string;
+  date: string;
+}): Promise<Transaction> {
+  return request("/api/v1/finance/transactions", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export function deleteTransaction(id: number): Promise<void> {
+  return request(`/api/v1/finance/transactions/${id}`, { method: "DELETE" });
+}
+
+export function getBills(): Promise<Bill[]> {
+  return request("/api/v1/finance/bills");
+}
+
+export function getBillsForMonth(year: number, month: number): Promise<BillStatus[]> {
+  return request(`/api/v1/finance/bills/month?year=${year}&month=${month}`);
+}
+
+export function createBill(data: {
+  category_id?: number | null;
+  name: string;
+  amount: number;
+  due_day: number;
+}): Promise<Bill> {
+  return request("/api/v1/finance/bills", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export function updateBill(
+  id: number,
+  data: Partial<{
+    category_id: number | null;
+    name: string;
+    amount: number;
+    due_day: number;
+    is_active: boolean;
+  }>,
+): Promise<Bill> {
+  return request(`/api/v1/finance/bills/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
+export function deleteBill(id: number): Promise<void> {
+  return request(`/api/v1/finance/bills/${id}`, { method: "DELETE" });
+}
+
+export function payBill(id: number, year: number, month: number): Promise<BillStatus> {
+  return request(`/api/v1/finance/bills/${id}/pay?year=${year}&month=${month}`, {
+    method: "POST",
+  });
+}
+
+export function unpayBill(id: number, year: number, month: number): Promise<BillStatus> {
+  return request(`/api/v1/finance/bills/${id}/pay?year=${year}&month=${month}`, {
+    method: "DELETE",
+  });
+}
+
+// Installments (parcelas)
+
+export function getInstallments(): Promise<Installment[]> {
+  return request("/api/v1/finance/installments");
+}
+
+export function getInstallmentsForMonth(
+  year: number,
+  month: number,
+): Promise<InstallmentStatus[]> {
+  return request(`/api/v1/finance/installments/month?year=${year}&month=${month}`);
+}
+
+export function createInstallment(data: {
+  description: string;
+  installment_amount: number;
+  total_installments: number;
+  start_year: number;
+  start_month: number;
+  due_day: number;
+  category_id: number | null;
+}): Promise<Installment> {
+  return request("/api/v1/finance/installments", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export function deleteInstallment(id: number): Promise<void> {
+  return request(`/api/v1/finance/installments/${id}`, { method: "DELETE" });
+}
+
+// Savings goals (metas)
+
+export function getGoals(): Promise<SavingsGoal[]> {
+  return request("/api/v1/finance/goals");
+}
+
+export function createGoal(data: {
+  name: string;
+  target_amount: number;
+  current_amount: number;
+  emoji: string;
+  color: string;
+  deadline: string | null;
+}): Promise<SavingsGoal> {
+  return request("/api/v1/finance/goals", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export function contributeGoal(id: number, amount: number): Promise<SavingsGoal> {
+  return request(`/api/v1/finance/goals/${id}/contribute`, {
+    method: "POST",
+    body: JSON.stringify({ amount }),
+  });
+}
+
+export function deleteGoal(id: number): Promise<void> {
+  return request(`/api/v1/finance/goals/${id}`, { method: "DELETE" });
+}
+
+// Trend (month-by-month)
+
+export function getTrend(
+  year: number,
+  month: number,
+  months = 6,
+): Promise<TrendPoint[]> {
+  return request(
+    `/api/v1/finance/trend?year=${year}&month=${month}&months=${months}`,
+  );
 }
