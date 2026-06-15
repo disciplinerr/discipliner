@@ -42,6 +42,14 @@ class TransactionKind(str, enum.Enum):
     INCOME = "INCOME"
 
 
+class IncomeKind(str, enum.Enum):
+    """Type of a recurring monthly income source."""
+
+    SALARY = "SALARY"      # salário
+    BENEFIT = "BENEFIT"    # benefícios: VR, VT, etc.
+    OTHER = "OTHER"        # outras rendas fixas
+
+
 class BudgetGroup(str, enum.Enum):
     """50/30/20 rule buckets used to balance a monthly budget."""
 
@@ -315,7 +323,7 @@ class ExpenseCategory(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
     category_key: Mapped[str] = mapped_column(String(64), nullable=False)
     name: Mapped[str] = mapped_column(String(120), nullable=False)
-    emoji: Mapped[str] = mapped_column(String(8), default="💸")
+    emoji: Mapped[str] = mapped_column(String(32), default="tag")  # app icon key
     color: Mapped[str] = mapped_column(String(9), default="#a3a3a3")
     group: Mapped[BudgetGroup] = mapped_column(Enum(BudgetGroup), default=BudgetGroup.NEEDS)
     monthly_budget: Mapped[float] = mapped_column(Float, default=0.0)
@@ -413,6 +421,22 @@ class Installment(Base):
     category: Mapped["ExpenseCategory | None"] = relationship()
 
 
+class RecurringIncome(Base):
+    """A fixed monthly income source ("renda fixa"): salary or a benefit like
+    VR/VT. Unlike an INCOME Transaction (a one-off cash movement on a date), this
+    is recurring and counts toward every month's total income without re-entry."""
+
+    __tablename__ = "recurring_incomes"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
+    name: Mapped[str] = mapped_column(String(120), nullable=False)
+    amount: Mapped[float] = mapped_column(Float, nullable=False)
+    kind: Mapped[IncomeKind] = mapped_column(Enum(IncomeKind), default=IncomeKind.SALARY)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
 class SavingsGoal(Base):
     """A savings target the user works toward ("meta de economia"): a name, a
     target amount, and the amount accumulated so far. Progress is tracked by
@@ -425,7 +449,7 @@ class SavingsGoal(Base):
     name: Mapped[str] = mapped_column(String(120), nullable=False)
     target_amount: Mapped[float] = mapped_column(Float, nullable=False)
     current_amount: Mapped[float] = mapped_column(Float, default=0.0)
-    emoji: Mapped[str] = mapped_column(String(8), default="🎯")
+    emoji: Mapped[str] = mapped_column(String(32), default="target")  # app icon key
     color: Mapped[str] = mapped_column(String(9), default="#4ade80")
     deadline: Mapped[date | None] = mapped_column(Date, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)

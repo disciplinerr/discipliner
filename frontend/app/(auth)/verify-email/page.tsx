@@ -6,6 +6,7 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import Logo from "@/components/ui/Logo";
 import { ApiError, verifyEmail } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
+import { Check } from "lucide-react";
 
 type Status = "verifying" | "ok" | "error";
 
@@ -46,8 +47,8 @@ function VerifyEmailInner() {
   if (status === "ok") {
     return (
       <div className="rounded-2xl border border-line bg-surface p-6 shadow-soft text-center space-y-3">
-        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-foreground text-xl text-background mx-auto">
-          ✓
+        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-foreground text-background mx-auto">
+          <Check size={22} />
         </span>
         <p className="font-extrabold">{t("auth.verify_done_title")}</p>
         <p className="text-sm text-secondary">{t("auth.verify_done_text")}</p>

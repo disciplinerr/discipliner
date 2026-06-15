@@ -5,24 +5,37 @@ import { useEffect, useState } from "react";
 import StreakBadge from "@/components/dashboard/StreakBadge";
 import StatRing from "@/components/dashboard/StatRing";
 import WeekBars from "@/components/dashboard/WeekBars";
+import TrendChart from "@/components/finance/TrendChart";
 import Card from "@/components/ui/Card";
 import ProgressBar from "@/components/ui/ProgressBar";
 import RequireAuth from "@/components/ui/RequireAuth";
 import {
   getChallengeHistory,
   getDashboardStats,
+  getFinanceOverview,
   getReviewStats,
   getTodayRoutine,
   getTrailProgress,
+  getTrend,
 } from "@/lib/api";
-import { routineLabel, useI18n } from "@/lib/i18n";
+import { formatMoney } from "@/lib/finance";
+import { routineLabel, TKey, useI18n } from "@/lib/i18n";
 import {
   ChallengeHistoryItem,
   DashboardStats,
+  FinanceOverview,
   ReviewStats,
   RoutineDay,
   TrailProgress,
+  TrendPoint,
 } from "@/types";
+
+const FINANCE_STATUS_STYLE: Record<string, string> = {
+  healthy: "border-emerald-500/40 text-emerald-400",
+  tight: "border-amber-500/40 text-amber-400",
+  over: "border-rose-500/40 text-rose-400",
+  unknown: "border-line text-muted",
+};
 
 const RESULT_STYLE: Record<string, string> = {
   PASS: "bg-foreground text-background",
@@ -38,13 +51,22 @@ export default function DashboardPage() {
   const [trail, setTrail] = useState<TrailProgress | null>(null);
   const [reviews, setReviews] = useState<ReviewStats | null>(null);
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [finance, setFinance] = useState<FinanceOverview | null>(null);
+  const [trend, setTrend] = useState<TrendPoint[]>([]);
 
   useEffect(() => {
+    const now = new Date();
     getTodayRoutine().then(setRoutine).catch(() => {});
     getChallengeHistory().then(setHistory).catch(() => {});
     getTrailProgress().then(setTrail).catch(() => {});
     getReviewStats().then(setReviews).catch(() => {});
     getDashboardStats().then(setStats).catch(() => {});
+    getFinanceOverview(now.getFullYear(), now.getMonth() + 1)
+      .then(setFinance)
+      .catch(() => {});
+    getTrend(now.getFullYear(), now.getMonth() + 1, 6)
+      .then(setTrend)
+      .catch(() => {});
   }, []);
 
   const routineDone = routine
@@ -200,6 +222,83 @@ export default function DashboardPage() {
           </Link>
           */}
         </div>
+
+        {/* Finance overview: summary + monthly income vs spending chart */}
+        <Card>
+          <div className="mb-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted">
+                {t("dashboard.finance")}
+              </p>
+              {finance && (
+                <span
+                  className={`rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
+                    FINANCE_STATUS_STYLE[finance.recommendation.status]
+                  }`}
+                >
+                  {t(`dashboard.fin_status.${finance.recommendation.status}` as TKey)}
+                </span>
+              )}
+            </div>
+            <Link
+              href="/finance"
+              className="text-xs font-bold text-muted underline-offset-4 transition-colors hover:text-foreground hover:underline"
+            >
+              {t("dashboard.see_details")}
+            </Link>
+          </div>
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* Left: numbers */}
+            <div className="space-y-4">
+              <div>
+                <p className="text-3xl font-extrabold text-rose-400">
+                  {finance ? formatMoney(finance.total_spending, locale) : "—"}
+                </p>
+                <p className="mt-1 text-sm text-secondary">
+                  {finance
+                    ? `${t("dashboard.of_income")} ${formatMoney(finance.total_income, locale)}`
+                    : t("dashboard.finance_sub")}
+                </p>
+              </div>
+              <ProgressBar
+                value={finance?.total_spending ?? 0}
+                total={finance?.total_income ?? 0}
+              />
+              <div className="grid grid-cols-2 gap-3 pt-1">
+                <div className="rounded-xl border border-line bg-elevated/40 p-3">
+                  <p className="text-[11px] font-bold uppercase tracking-wide text-muted">
+                    {t("finance.net")}
+                  </p>
+                  <p
+                    className={`mt-1 text-lg font-extrabold ${
+                      (finance?.net ?? 0) >= 0 ? "text-emerald-400" : "text-rose-400"
+                    }`}
+                  >
+                    {finance ? formatMoney(finance.net, locale) : "—"}
+                  </p>
+                </div>
+                <div className="rounded-xl border border-line bg-elevated/40 p-3">
+                  <p className="text-[11px] font-bold uppercase tracking-wide text-muted">
+                    {t("finance.savings_rate")}
+                  </p>
+                  <p
+                    className={`mt-1 text-lg font-extrabold ${
+                      (finance?.savings_rate ?? 0) >= 0.2
+                        ? "text-emerald-400"
+                        : "text-foreground"
+                    }`}
+                  >
+                    {finance ? `${Math.round(finance.savings_rate * 100)}%` : "—"}
+                  </p>
+                </div>
+              </div>
+            </div>
+            {/* Right: trend chart */}
+            <div className="flex flex-col justify-center">
+              <TrendChart points={trend} />
+            </div>
+          </div>
+        </Card>
 
         {/* Progress analytics row */}
         <div className="grid gap-4 lg:grid-cols-3">

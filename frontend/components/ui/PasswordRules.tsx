@@ -1,3 +1,5 @@
+import { Check, Circle } from "lucide-react";
+
 type Rule = { label: string; met: boolean };
 
 function check(password: string): Rule[] {
@@ -25,7 +27,7 @@ export default function PasswordRules({ password }: { password: string }) {
             r.met ? "text-green-500" : "text-muted"
           }`}
         >
-          <span>{r.met ? "✓" : "·"}</span>
+          {r.met ? <Check size={12} /> : <Circle size={8} />}
           {r.label}
         </span>
       ))}

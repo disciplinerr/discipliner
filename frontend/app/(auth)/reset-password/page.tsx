@@ -9,6 +9,7 @@ import PasswordInput from "@/components/ui/PasswordInput";
 import PasswordRules, { passwordValid } from "@/components/ui/PasswordRules";
 import { ApiError, resetPassword } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
+import { ArrowLeft, Check } from "lucide-react";
 
 function ResetPasswordForm() {
   const { t } = useI18n();
@@ -58,8 +59,8 @@ function ResetPasswordForm() {
   if (done) {
     return (
       <div className="rounded-2xl border border-line bg-surface p-6 shadow-soft text-center space-y-3">
-        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-foreground text-xl text-background mx-auto">
-          ✓
+        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-foreground text-background mx-auto">
+          <Check size={22} />
         </span>
         <p className="font-extrabold">{t("auth.reset_done_title")}</p>
         <p className="text-sm text-secondary">{t("auth.reset_done_text")}</p>
@@ -118,9 +119,9 @@ export default function ResetPasswordPage() {
         <p className="mt-5 text-center text-sm text-muted">
           <Link
             href="/login"
-            className="font-semibold text-foreground underline-offset-4 hover:underline"
+            className="inline-flex items-center gap-1 font-semibold text-foreground underline-offset-4 hover:underline"
           >
-            ← {t("auth.back_to_login")}
+            <ArrowLeft size={14} /> {t("auth.back_to_login")}
           </Link>
         </p>
       </div>

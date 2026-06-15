@@ -12,8 +12,10 @@ from app.models import (
     BillPayment,
     BudgetGroup,
     ExpenseCategory,
+    IncomeKind,
     Installment,
     RecurringBill,
+    RecurringIncome,
     SavingsGoal,
     Transaction,
     TransactionKind,
@@ -32,6 +34,9 @@ from app.schemas import (
     InstallmentOut,
     InstallmentStatusOut,
     InstallmentUpdate,
+    RecurringIncomeCreate,
+    RecurringIncomeOut,
+    RecurringIncomeUpdate,
     SavingsGoalContribute,
     SavingsGoalCreate,
     SavingsGoalOut,
@@ -44,6 +49,7 @@ from app.services.finance_service import (
     bills_for_month,
     build_overview,
     get_categories,
+    get_recurring_incomes,
     get_savings_goals,
     installments_for_month,
     trend_for_months,
@@ -517,6 +523,77 @@ def delete_installment(
         raise HTTPException(status_code=404, detail="Installment not found")
     db.delete(plan)
     db.commit()
+
+
+# ── Recurring income (renda fixa: salário + benefícios) ──────────────────────
+
+@router.get("/incomes", response_model=list[RecurringIncomeOut])
+def list_incomes(
+    current_user: User = Depends(get_current_user), db: Session = Depends(get_db)
+):
+    return get_recurring_incomes(db, current_user.id)
+
+
+@router.post("/incomes", response_model=RecurringIncomeOut, status_code=201)
+def create_income(
+    payload: RecurringIncomeCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    income = RecurringIncome(
+        user_id=current_user.id,
+        name=payload.name,
+        amount=payload.amount,
+        kind=IncomeKind(payload.kind),
+        is_active=True,
+    )
+    db.add(income)
+    db.commit()
+    db.refresh(income)
+    return income
+
+
+@router.patch("/incomes/{income_id}", response_model=RecurringIncomeOut)
+def update_income(
+    income_id: int,
+    payload: RecurringIncomeUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    income = _get_owned_income(db, current_user.id, income_id)
+    if payload.name is not None:
+        income.name = payload.name
+    if payload.amount is not None:
+        income.amount = payload.amount
+    if payload.kind is not None:
+        income.kind = IncomeKind(payload.kind)
+    if payload.is_active is not None:
+        income.is_active = payload.is_active
+    db.commit()
+    db.refresh(income)
+    return income
+
+
+@router.delete("/incomes/{income_id}", status_code=204)
+def delete_income(
+    income_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    income = _get_owned_income(db, current_user.id, income_id)
+    db.delete(income)
+    db.commit()
+
+
+def _get_owned_income(db: Session, user_id: int, income_id: int) -> RecurringIncome:
+    income = db.scalar(
+        select(RecurringIncome).where(
+            RecurringIncome.id == income_id, RecurringIncome.user_id == user_id
+        )
+    )
+    if income is None:
+        raise HTTPException(status_code=404, detail="Income not found")
+    return income
 
 
 # ── Savings goals (metas) ────────────────────────────────────────────────────

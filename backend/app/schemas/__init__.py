@@ -279,7 +279,7 @@ class CategoryOut(BaseModel):
 
 class CategoryCreate(BaseModel):
     name: str = Field(min_length=1, max_length=120)
-    emoji: str = Field(default="💸", max_length=8)
+    emoji: str = Field(default="tag", max_length=32)  # app icon key
     color: str = Field(default="#a3a3a3", max_length=9)
     group: str = Field(default="NEEDS", pattern="^(NEEDS|WANTS|SAVINGS)$")
     monthly_budget: float = Field(default=0.0, ge=0)
@@ -287,7 +287,7 @@ class CategoryCreate(BaseModel):
 
 class CategoryUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=120)
-    emoji: str | None = Field(default=None, max_length=8)
+    emoji: str | None = Field(default=None, max_length=32)
     color: str | None = Field(default=None, max_length=9)
     group: str | None = Field(default=None, pattern="^(NEEDS|WANTS|SAVINGS)$")
     monthly_budget: float | None = Field(default=None, ge=0)
@@ -372,13 +372,41 @@ class GroupSpendOut(BaseModel):
     over_budget: bool
 
 
+class RecommendationGroupOut(BaseModel):
+    group: str          # NEEDS / WANTS / SAVINGS
+    pct: int            # 50 / 30 / 20
+    amount: float       # recommended R$ for this group
+
+
+class RecommendationItemOut(BaseModel):
+    key: str            # housing, food, transport, ...
+    group: str
+    pct: int
+    amount: float
+
+
+class RecommendationOut(BaseModel):
+    income: float
+    actual_spending: float
+    leftover: float
+    savings_rate: float
+    status: str         # healthy / tight / over / unknown
+    groups: list[RecommendationGroupOut]
+    items: list[RecommendationItemOut]
+
+
 class FinanceOverviewOut(BaseModel):
     year: int
     month: int
-    income: float
-    expense: float
-    balance: float
-    savings_rate: float
+    income: float                    # one-off INCOME transactions this month
+    expense: float                   # one-off EXPENSE transactions (lançamentos)
+    balance: float                   # income - expense (transaction-only)
+    savings_rate: float              # net / total_income
+    recurring_income: float          # sum of active recurring income (salário + VR/VT)
+    total_income: float              # recurring_income + income
+    total_spending: float            # expense + bills_total + installments_month
+    net: float                       # total_income - total_spending
+    recommendation: RecommendationOut
     total_budget: float
     bills_total: float
     bills_paid: float
@@ -389,6 +417,31 @@ class FinanceOverviewOut(BaseModel):
     installments_outstanding: float  # total still owed from this month onward
     groups: list[GroupSpendOut]
     categories: list[CategorySpendOut]
+
+
+# --- Recurring income (renda fixa: salário + benefícios) ---
+
+class RecurringIncomeOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+    amount: float
+    kind: str
+    is_active: bool
+
+
+class RecurringIncomeCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+    amount: float = Field(gt=0)
+    kind: str = Field(default="SALARY", pattern="^(SALARY|BENEFIT|OTHER)$")
+
+
+class RecurringIncomeUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=120)
+    amount: float | None = Field(default=None, gt=0)
+    kind: str | None = Field(default=None, pattern="^(SALARY|BENEFIT|OTHER)$")
+    is_active: bool | None = None
 
 
 # --- Installments (parcelas) ---
@@ -463,7 +516,7 @@ class SavingsGoalCreate(BaseModel):
     name: str = Field(min_length=1, max_length=120)
     target_amount: float = Field(gt=0)
     current_amount: float = Field(default=0.0, ge=0)
-    emoji: str = Field(default="🎯", max_length=8)
+    emoji: str = Field(default="target", max_length=32)  # app icon key
     color: str = Field(default="#4ade80", max_length=9)
     deadline: date | None = None
 
@@ -472,7 +525,7 @@ class SavingsGoalUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=120)
     target_amount: float | None = Field(default=None, gt=0)
     current_amount: float | None = Field(default=None, ge=0)
-    emoji: str | None = Field(default=None, max_length=8)
+    emoji: str | None = Field(default=None, max_length=32)
     color: str | None = Field(default=None, max_length=9)
     deadline: date | None = None
     is_active: bool | None = None

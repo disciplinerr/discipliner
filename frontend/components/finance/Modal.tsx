@@ -1,5 +1,7 @@
 "use client";
 
+import { X } from "lucide-react";
+
 interface Props {
   title: string;
   onClose: () => void;
@@ -23,9 +25,10 @@ export default function Modal({ title, onClose, children }: Props) {
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg px-3 py-1.5 text-xs font-bold text-muted transition-colors hover:bg-elevated hover:text-foreground"
+            className="rounded-lg p-1.5 text-muted transition-colors hover:bg-elevated hover:text-foreground"
+            aria-label="Fechar"
           >
-            ✕
+            <X size={16} />
           </button>
         </div>
         <div className="flex-1 overflow-y-auto px-6 py-5">{children}</div>

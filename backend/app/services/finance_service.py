@@ -20,25 +20,28 @@ from app.models import (
     ExpenseCategory,
     Installment,
     RecurringBill,
+    RecurringIncome,
     SavingsGoal,
     Transaction,
     TransactionKind,
+    User,
 )
 
-# key -> (name, emoji, color, group)
+# key -> (name, icon, color, group). `icon` is an app icon key (see frontend
+# lib/icons.tsx), not an OS emoji, so it renders identically on every platform.
 DEFAULT_CATEGORIES: dict[str, tuple[str, str, str, BudgetGroup]] = {
-    "study": ("Educação", "🎓", "#fbbf24", BudgetGroup.NEEDS),
-    "housing": ("Moradia", "🏠", "#60a5fa", BudgetGroup.NEEDS),
-    "groceries": ("Mercado", "🛒", "#34d399", BudgetGroup.NEEDS),
-    "transport": ("Transporte", "🚌", "#fbbf24", BudgetGroup.NEEDS),
-    "utilities": ("Contas de casa", "💡", "#f87171", BudgetGroup.NEEDS),
-    "health": ("Saúde", "🩺", "#f472b6", BudgetGroup.NEEDS),
-    "dining": ("Restaurantes", "🍽️", "#fb923c", BudgetGroup.WANTS),
-    "leisure": ("Lazer", "🎮", "#a78bfa", BudgetGroup.WANTS),
-    "shopping": ("Compras", "🛍️", "#e879f9", BudgetGroup.WANTS),
-    "subscriptions": ("Assinaturas", "📺", "#22d3ee", BudgetGroup.WANTS),
-    "savings": ("Reserva / Investimento", "💰", "#4ade80", BudgetGroup.SAVINGS),
-    "debt": ("Dívidas", "💳", "#fca5a5", BudgetGroup.SAVINGS),
+    "study": ("Educação", "education", "#fbbf24", BudgetGroup.NEEDS),
+    "housing": ("Moradia", "housing", "#60a5fa", BudgetGroup.NEEDS),
+    "groceries": ("Mercado", "groceries", "#34d399", BudgetGroup.NEEDS),
+    "transport": ("Transporte", "transport", "#fbbf24", BudgetGroup.NEEDS),
+    "utilities": ("Contas de casa", "utilities", "#f87171", BudgetGroup.NEEDS),
+    "health": ("Saúde", "health", "#f472b6", BudgetGroup.NEEDS),
+    "dining": ("Restaurantes", "dining", "#fb923c", BudgetGroup.WANTS),
+    "leisure": ("Lazer", "leisure", "#a78bfa", BudgetGroup.WANTS),
+    "shopping": ("Compras", "shopping", "#e879f9", BudgetGroup.WANTS),
+    "subscriptions": ("Assinaturas", "subscriptions", "#22d3ee", BudgetGroup.WANTS),
+    "savings": ("Reserva / Investimento", "savings", "#4ade80", BudgetGroup.SAVINGS),
+    "debt": ("Dívidas", "debt", "#fca5a5", BudgetGroup.SAVINGS),
 }
 
 GROUP_TARGETS: dict[BudgetGroup, int] = {
@@ -46,6 +49,62 @@ GROUP_TARGETS: dict[BudgetGroup, int] = {
     BudgetGroup.WANTS: 30,
     BudgetGroup.SAVINGS: 20,
 }
+
+# Recommended monthly allocation for a balanced budget, as a fraction of net
+# income. Built on the 50/30/20 rule (Warren & Tyagi, "All Your Worth") refined
+# with commonly cited personal-finance ceilings: housing ≤30% (the classic
+# "30% rule"), food ~12%, transport ~12%. Fractions sum to 1.0.
+# key -> (fraction, 50/30/20 group)
+SPENDING_GUIDELINES: dict[str, tuple[float, BudgetGroup]] = {
+    "housing": (0.30, BudgetGroup.NEEDS),     # aluguel/financiamento + contas de casa
+    "food": (0.12, BudgetGroup.NEEDS),        # mercado + alimentação essencial
+    "transport": (0.08, BudgetGroup.NEEDS),   # transporte
+    "leisure": (0.10, BudgetGroup.WANTS),     # lazer, restaurantes
+    "shopping": (0.10, BudgetGroup.WANTS),    # compras, assinaturas, pessoal
+    "education": (0.10, BudgetGroup.WANTS),   # educação, desenvolvimento
+    "savings": (0.15, BudgetGroup.SAVINGS),   # reserva + investimento
+    "debt": (0.05, BudgetGroup.SAVINGS),      # quitação de dívidas
+}
+
+
+def spending_recommendation(income: float, actual_spending: float) -> dict:
+    """Project a healthy monthly budget from income and rate the current spend.
+
+    Returns the 50/30/20 group caps, a finer per-area breakdown, and a verdict
+    based on how much of income is left after spending (the savings rate):
+    >=20% healthy, 0–20% tight, negative over-budget."""
+    groups = [
+        {"group": g.value, "pct": pct, "amount": round(income * pct / 100, 2)}
+        for g, pct in GROUP_TARGETS.items()
+    ]
+    items = [
+        {
+            "key": key,
+            "group": group.value,
+            "pct": round(frac * 100),
+            "amount": round(income * frac, 2),
+        }
+        for key, (frac, group) in SPENDING_GUIDELINES.items()
+    ]
+    leftover = income - actual_spending
+    rate = (leftover / income) if income > 0 else 0.0
+    if income <= 0:
+        status = "unknown"
+    elif rate >= 0.20:
+        status = "healthy"
+    elif rate >= 0:
+        status = "tight"
+    else:
+        status = "over"
+    return {
+        "income": income,
+        "actual_spending": actual_spending,
+        "leftover": leftover,
+        "savings_rate": rate,
+        "status": status,
+        "groups": groups,
+        "items": items,
+    }
 
 
 def ensure_categories_seeded(db: Session, user_id: int) -> None:
@@ -217,10 +276,42 @@ def installments_outstanding(db: Session, user_id: int) -> float:
 
 
 def trend_for_months(db: Session, user_id: int, year: int, month: int, months: int) -> list[dict]:
-    """Income/expense/balance for the `months` months ending at (year, month)."""
+    """Holistic income/expense/balance for the `months` months ending at (year, month).
+
+    Mirrors the overview totals so the chart matches the summary cards:
+    income  = recurring income (salário + VR/VT) + one-off INCOME transactions;
+    expense = one-off EXPENSE transactions + fixed bills + installment charges.
+
+    Recurring income and fixed bills have no per-month ledger — the only history
+    we can honestly attribute is "from when they were created onward". So each is
+    counted only in months at/after its ``created_at`` month, instead of being
+    smeared flat across every month. Installments are already month-bounded by
+    their span, and transactions are anchored to their own date."""
+
+    def _month_idx(y: int, m: int) -> int:
+        return y * 12 + (m - 1)
+
+    # The chart starts at the user's signup month — there's no meaningful
+    # history before they joined (they'd have to backfill every past expense),
+    # so earlier months are dropped rather than shown empty.
+    signup = db.scalar(select(User.created_at).where(User.id == user_id))
+    signup_idx = _month_idx(signup.year, signup.month) if signup else None
+
+    incomes = [ri for ri in get_recurring_incomes(db, user_id) if ri.is_active]
+    bills = list(
+        db.scalars(
+            select(RecurringBill).where(
+                RecurringBill.user_id == user_id, RecurringBill.is_active.is_(True)
+            )
+        )
+    )
+
     points: list[dict] = []
     for i in range(months - 1, -1, -1):
         y, m = _add_months(year, month, -i)
+        idx = _month_idx(y, m)
+        if signup_idx is not None and idx < signup_idx:
+            continue  # before the user joined — skip
         first, last = _month_bounds(y, m)
         txns = db.scalars(
             select(Transaction).where(
@@ -229,8 +320,27 @@ def trend_for_months(db: Session, user_id: int, year: int, month: int, months: i
                 Transaction.date <= last,
             )
         ).all()
-        income = sum(t.amount for t in txns if t.kind == TransactionKind.INCOME)
-        expense = sum(t.amount for t in txns if t.kind == TransactionKind.EXPENSE)
+        recurring_income = sum(
+            ri.amount
+            for ri in incomes
+            if _month_idx(ri.created_at.year, ri.created_at.month) <= idx
+        )
+        bills_total = sum(
+            b.amount
+            for b in bills
+            if _month_idx(b.created_at.year, b.created_at.month) <= idx
+        )
+        installments = sum(
+            r["installment_amount"] for r in installments_for_month(db, user_id, y, m)
+        )
+        income = recurring_income + sum(
+            t.amount for t in txns if t.kind == TransactionKind.INCOME
+        )
+        expense = (
+            sum(t.amount for t in txns if t.kind == TransactionKind.EXPENSE)
+            + bills_total
+            + installments
+        )
         points.append(
             {
                 "year": y,
@@ -241,6 +351,16 @@ def trend_for_months(db: Session, user_id: int, year: int, month: int, months: i
             }
         )
     return points
+
+
+def get_recurring_incomes(db: Session, user_id: int) -> list[RecurringIncome]:
+    return list(
+        db.scalars(
+            select(RecurringIncome)
+            .where(RecurringIncome.user_id == user_id)
+            .order_by(RecurringIncome.created_at)
+        ).all()
+    )
 
 
 def get_savings_goals(db: Session, user_id: int) -> list[SavingsGoal]:
@@ -269,7 +389,6 @@ def build_overview(db: Session, user_id: int, year: int, month: int) -> dict:
     income = sum(t.amount for t in txns if t.kind == TransactionKind.INCOME)
     expense = sum(t.amount for t in txns if t.kind == TransactionKind.EXPENSE)
     balance = income - expense
-    savings_rate = (balance / income) if income > 0 else 0.0
 
     categories = get_categories(db, user_id, active_only=True)
     cat_by_id = {c.id: c for c in categories}
@@ -320,6 +439,17 @@ def build_overview(db: Session, user_id: int, year: int, month: int) -> dict:
     installments_month = sum(i["installment_amount"] for i in installments)
     installments_outstanding_total = sum(i["remaining_amount"] for i in installments)
 
+    # Holistic monthly picture: recurring income (salário + VR/VT) plus any
+    # one-off income, against everything owed this month — loose transactions,
+    # fixed bills and installment charges.
+    recurring_income = sum(
+        ri.amount for ri in get_recurring_incomes(db, user_id) if ri.is_active
+    )
+    total_income = recurring_income + income
+    total_spending = expense + bills_total + installments_month
+    net = total_income - total_spending
+    savings_rate = (net / total_income) if total_income > 0 else 0.0
+
     return {
         "year": year,
         "month": month,
@@ -327,6 +457,11 @@ def build_overview(db: Session, user_id: int, year: int, month: int) -> dict:
         "expense": expense,
         "balance": balance,
         "savings_rate": savings_rate,
+        "recurring_income": recurring_income,
+        "total_income": total_income,
+        "total_spending": total_spending,
+        "net": net,
+        "recommendation": spending_recommendation(total_income, total_spending),
         "total_budget": sum(c.monthly_budget for c in categories),
         "bills_total": bills_total,
         "bills_paid": bills_paid,
