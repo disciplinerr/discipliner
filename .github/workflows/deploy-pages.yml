@@ -1,0 +1,65 @@
+name: Deploy landing to GitHub Pages
+
+# Publica a landing sempre que a branch `landing` recebe push.
+# Também pode ser disparado manualmente em Actions.
+on:
+  push:
+    branches: [landing]
+  workflow_dispatch:
+
+# Permissões mínimas que o deploy-pages exige.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Garante um deploy por vez; cancela builds antigos em andamento.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Build (static export)
+        run: npm run build
+        env:
+          # Project page é servida em /discipliner — sem isso os assets dão 404.
+          NEXT_PUBLIC_BASE_PATH: /discipliner
+
+      - name: Disable Jekyll (serve _next/)
+        run: touch out/.nojekyll
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: out
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
