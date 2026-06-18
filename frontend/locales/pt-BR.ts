@@ -31,6 +31,7 @@ export const ptBR = {
   "auth.has_account": "Já registrado?",
   "auth.login_failed": "Falha no login",
   "auth.register_failed": "Falha no cadastro",
+  "auth.email_taken": "Já existe uma conta com esse e-mail.",
   "auth.forgot_password": "Esqueceu a senha?",
   "auth.forgot_subtitle": "Informe seu e-mail para receber o link de redefinição.",
   "auth.forgot_submit": "Enviar link",
