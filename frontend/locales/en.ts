@@ -33,6 +33,7 @@ export const en: Record<keyof typeof ptBR, string> = {
   "auth.has_account": "Already registered?",
   "auth.login_failed": "Login failed",
   "auth.register_failed": "Registration failed",
+  "auth.email_taken": "An account with this email already exists.",
   "auth.forgot_password": "Forgot password?",
   "auth.forgot_subtitle": "Enter your email to receive a reset link.",
   "auth.forgot_submit": "Send reset link",

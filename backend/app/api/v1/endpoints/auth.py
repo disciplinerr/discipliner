@@ -76,29 +76,15 @@ def register(request: Request, payload: UserCreate, db: Session = Depends(get_db
 
     existing = db.scalar(select(User).where(User.email == payload.email))
     if existing:
-        # Don't reveal that the account exists. The right email to send depends
-        # on whether the real owner can actually use the account; the client
-        # always gets the same generic response either way.
-        if existing.is_verified:
-            # Usable account — point the owner to login / password reset.
-            login_url = f"{settings.FRONTEND_URL}/login"
-            reset_url = f"{settings.FRONTEND_URL}/forgot-password"
-            try:
-                send_existing_account_email(existing.email, login_url, reset_url)
-            except Exception:
-                pass  # logged inside; never surface to the client
-        else:
-            # Account exists but was never confirmed. Telling the owner to "log
-            # in" is a dead end (login 403s on unverified accounts), so resend a
-            # fresh verification link instead. Password is left untouched to
-            # avoid a re-registration account-takeover vector.
+        if not existing.is_verified:
+            # Resend verification so the owner can finish signing up.
             verify_url = _issue_verification_token(db, existing)
             db.commit()
             try:
                 send_verification_email(existing.email, verify_url)
             except Exception:
-                pass  # logged inside; never surface to the client
-        return _REGISTER_RESPONSE
+                pass
+        raise HTTPException(status_code=409, detail="email_taken")
 
     user = User(
         email=payload.email,

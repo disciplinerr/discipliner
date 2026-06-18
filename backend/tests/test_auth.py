@@ -80,28 +80,27 @@ def test_register_weak_password_rejected(client):
     assert r.status_code == 422
 
 
-def test_register_duplicate_email_returns_generic_response(client, db):
-    """Re-registering must NOT reveal that the account exists (no enumeration)."""
+def test_register_duplicate_email_returns_409(client, db):
+    """Re-registering an existing verified account must return 409."""
     from sqlalchemy import select
     from app.models import User
 
     _register_and_verify(client, db, "dup@test.com")
     r = _register(client, "dup@test.com")
-    # Same opaque 202 as a fresh registration.
-    assert r.status_code == 202
-    # And no second account was created.
+    assert r.status_code == 409
+    # No second account was created.
     users = db.scalars(select(User).where(User.email == "dup@test.com")).all()
     assert len(users) == 1
 
 
 def test_register_existing_unverified_resends_verification(client, db):
-    """An unverified account re-registering gets a fresh verification token,
-    not the dead-end 'you already have an account, just log in' email."""
+    """An unverified account re-registering gets a fresh verification token
+    and a 409 so the form shows an error instead of the success screen."""
     _register(client, "pending@test.com")
     first = _latest_verification_token(db, "pending@test.com")
 
     r = _register(client, "pending@test.com")
-    assert r.status_code == 202
+    assert r.status_code == 409
 
     db.expire_all()
     latest = _latest_verification_token(db, "pending@test.com")

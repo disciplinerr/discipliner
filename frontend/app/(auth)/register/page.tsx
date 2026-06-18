@@ -34,11 +34,13 @@ export default function RegisterPage() {
     setBusy(true);
     try {
       await register(email, password, passwordConfirm);
-      // Registration is opaque (anti-enumeration): we always land on the
-      // "check your email" screen, never logging in directly.
       setSent(true);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : t("auth.register_failed"));
+      if (err instanceof ApiError && err.status === 409) {
+        setError(t("auth.email_taken"));
+      } else {
+        setError(err instanceof ApiError ? err.message : t("auth.register_failed"));
+      }
     } finally {
       setBusy(false);
     }
